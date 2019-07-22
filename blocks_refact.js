@@ -87,6 +87,11 @@ function main() {
                 this.b.rotateZ(speed * Math.random() * pos);
             }
         }
+
+        this.vanish = function () {
+            this.b.material.transparent = true;
+            this.b.material.opacity = 0;
+        }
     }
 
     const WHITE = 0xFFFFFF;
@@ -95,14 +100,6 @@ function main() {
 
     function WhiteBlock(y, mev) {
         Block.call(this, WHITE, y, mev);
-    }
-
-    function RedBlock(y, mev) {
-        Block.call(this, RED, y, mev);
-        this.coins = [];
-        this.spawn = function () {
-
-        }
     }
 
     let cubes = [];
@@ -143,20 +140,68 @@ function main() {
         return coin;
     }
 
+    function Coin(x,y) {
+        this.c = makeCoin(x,y);
+        this.x = x;
+        this.y = y;
 
-    function move_coin(coin) {
-        let c = coin.c;
-        let x = coin.x;
-        let y = coin.y;
-        if (c.position.y <= y) {
-            c.position.y += 0.1
-        } else {
-            c.position.y -= 0.1
+        this.drift = function () {
+            this.x += Math.random() * 3;
+            this.y += Math.random() * ((Math.random() < 0.5) ? 1 : -1);
         }
-        if (c.position.x <= x) {
-            c.position.x += 0.1
-        } else {
-            c.position.x -= 0.1
+
+        this.update = function () {
+            if (this.c.position.y <= this.y) this.c.position.y += 0.1;
+            else this.c.position.y -= 0.1;
+            if (this.c.position.x <= this.x) this.c.position.x += 0.1;
+            else this.c.position.x -= 0.1;
+        }
+
+        this.disappear = function () {
+            this.c.material.transparent = true;
+            this.c.material.opacity = 0;
+        }
+    }
+
+    function RedBlock(y, mev) {
+        Block.call(this, RED, y, mev);
+        this.coins = [];
+
+        this.spawn = function () {
+            for (let i = 0; i < this.mev; i++) {
+                let nc = new Coin(this.b.position.x, this.b.position.y);
+                nc.c.position.z = 1;
+                nc.c.rotation.x = 70;
+                this.coins.push(nc);
+            }
+        }
+
+        this.explode = function () {
+            this.coins.forEach((c) => c.drift());
+        }
+
+        this.set_coins = function (x,y) {
+            this.coins.forEach((c) => {
+                c.x = x;
+                c.y = y;
+            })
+        }
+
+        this.update_coins = function () {
+            this.coins.forEach((c) => c.update());
+        }
+
+        this.vanish_coins = function () {
+            this.coins.forEach((c) => c.disappear());
+        }
+
+        this.spin_coins = function (time) {
+            this.coins.forEach((coin,ndx) => {
+                const speed = 1 + ndx * .01;
+                const rot = time * speed;
+                coin.c.rotation.x = rot;
+                coin.c.rotation.y = rot;
+            });
         }
     }
 
@@ -170,17 +215,18 @@ function main() {
         target_block: 2,
     };
 
+    var config = default_config
+
     var last = 0;
     var a_last = 0;
 
-    var block_rate = default_config.block_rate;
-    var a_rate = default_config.a_rate;
-    var mev_start = default_config.mev_start;
-    var mev_lst = default_config.mev_lst;
-    var target_block = default_config.target_block;
+    var block_rate = config.block_rate;
+    var a_rate = config.a_rate;
+    var mev_start = config.mev_start;
+    var mev_lst = config.mev_lst;
+    var target_block = config.target_block;
 
     var forks = [];
-    var coins = [];
     var surpassed = false;
     var pass_y = 0;
     var mev_blocks = [];
@@ -210,7 +256,7 @@ function main() {
     }
 
     function fork_state(time) {
-        forks.forEach((cube) => move_cube_up(cube));
+        forks.forEach((cube) => cube.move_cube_up());
         if (time - a_last >= a_rate) {
             a_last = time;
             if (surpassed) {
@@ -224,20 +270,9 @@ function main() {
                 let tb = mev_blocks[target_block];
                 let nb = new RedBlock(tb.y, tb.mev);
                 nb.b.position.x = 2;
-                let subcoins = [];
-                for (let i = 0; i < tb.mev; i++) {
-                    let coin = makeCoin(nb.position.x, nb.position.y);
-                    coin.position.z = 1;
-                    coin.rotation.x = 70;
-                    let cd = { c: coin, x: coin.position.x, y: coin.position.y }
-                    coins.push(cd);
-                    subcoins.push(cd)
-                }
+                nb.spawn();
+                nb.explode();
                 forks.push(nb);
-                subcoins.forEach((coin) => {
-                    coin.x += Math.random() * 3;
-                    coin.y += Math.random() * ((Math.random() < 0.5) ? 1 : -1);
-                })
                 target_block++;
                 if (target_block == mev_blocks.length) {
                     surpassed = true;
@@ -246,10 +281,7 @@ function main() {
             }
         }
         if (time - last >= block_rate) {
-            forks.forEach((cube) => {
-                cube.y += 1.5;
-            })
-            coins.forEach((coin) => coin.y += 1.5)
+            forks.forEach((cube) => cube.y += 1.5);
             pass_y += 1.5;
         }
     }
@@ -279,8 +311,6 @@ function main() {
         }
     }
 
-    // let tst_coin = makeCoin(0, 0);
-
     //render
     function render(time) {
         time *= 0.001;
@@ -296,54 +326,38 @@ function main() {
         } else if (state == "mev") {
             mev_state(time);
         }
-        // else if (state == "fork") {
-        //     fork_state(time);
-        //     stable_state(time);
-        // } else if (state == "win") {
-        //     camera.fov += 0.2;
-        //     camera.updateProjectionMatrix();
-        //     if (camera.fov >= 130) {
-        //         state = "stop";
-        //     }
-        //     coins.forEach((coin) => {
-        //         coin.x = 4.5;
-        //         coin.y = -2.5;
-        //     })
-        // } else if (state == "stop") {
-        //     replace_state();
-        // } else if (state == "replay") {
-        //     coins.forEach((coin) => {
-        //         coin.c.material.transparent = true;
-        //         coin.c.material.opacity = 0;
-        //     })
-        //     camera.fov -= 0.5;
-        //     camera.updateProjectionMatrix();
-        //     if (camera.fov <= 75) {
-        //         state = "stable2"
-        //         let sub_cubes = cubes.slice(cubes.length - forks.length + 1);
-        //         sub_cubes.forEach((cube) => {
-        //             cube.b.material.transparent = true;
-        //             cube.b.material.opacity = 0;
-        //         })
-        //         cubes = cubes.concat(forks);
-        //         cubes.forEach((cube) => cube.y += 1.5);
-        //         // forks.forEach((cube) => cube.y += 3);
-        //     }
-        // }
+        else if (state == "fork") {
+            fork_state(time);
+            stable_state(time);
+        }
+        else if (state == "win") {
+            camera.fov += 0.2;
+            camera.updateProjectionMatrix();
+            if (camera.fov >= 130) {
+                state = "zoom out";
+            }
+            forks.forEach((b) => b.set_coins(4.5,-2.5));
+        }
+        else if (state == "zoom out") {
+            replace_state();
+        }
+        else if (state == "replay") {
+            forks.forEach((c) => c.vanish_coins());
+            camera.fov -= 0.5;
+            camera.updateProjectionMatrix();
+            if (camera.fov <= 75) {
+                state = "stable2"
+                let sub_cubes = cubes.slice(cubes.length - forks.length + 1);
+                sub_cubes.forEach((c) => c.vanish());
+                cubes = cubes.concat(forks);
+                cubes.forEach((cube) => cube.y += 1.5);
+                forks = [];
+            }
+        }
 
         if (time > mev_start & state == "stable") {
             state = "mev";
         }
-
-        // coins.forEach((coin, ndx) => {
-        //     const speed = 1 + ndx * .01;
-        //     const rot = time * speed;
-        //     coin.c.rotation.x = rot;
-        //     coin.c.rotation.y = rot;
-        // })
-
-        // coins.forEach((coin) => move_coin(coin));
-
 
         cubes.forEach((cube, ndx) => {
             cube.move_cube_up();
@@ -353,15 +367,13 @@ function main() {
             cube.b.rotation.y = rot;
         });
 
-        // forks.forEach((cube, ndx) => {
-        //     const speed = 10 + ndx * .1;
-        //     const rot = time * speed;
-        //     cube.b.rotation.y = rot;
-        // });
-
-        // cubes.forEach((cube) => {
-        //     if (cube.mev != 0) vibrate(cube);
-        // });
+        forks.forEach((cube, ndx) => {
+            const speed = 10 + ndx * .1;
+            const rot = time * speed;
+            cube.update_coins();
+            cube.spin_coins(time);
+            cube.b.rotation.y = rot;
+        });
 
         renderer.render(scene, camera);
 
