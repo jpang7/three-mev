@@ -66,15 +66,18 @@ function main() {
         this.mev = mev;
         this.y = y;
 
+        // Create a small tilt that distinguishes each block
         this.adjust_cube = function () {
             let dir = (Math.random() < 0.5) ? 1 : -1;
             this.b.rotateY(Math.random() * 0.5 * dir);
         }
 
+        // Translate block to [this.y]
         this.move_cube_up = function () {
             if (this.b.position.y <= this.y) this.b.position.y += 0.1;
         }
 
+        // Create a vibrating effect
         this.vibrate = function () {
             const speed = this.mev * 0.01;
             let pos = Math.random() < 0.5 ? 1 : -1;
@@ -88,6 +91,7 @@ function main() {
             }
         }
 
+        // Visibly disappear
         this.vanish = function () {
             this.b.material.transparent = true;
             this.b.material.opacity = 0;
@@ -111,6 +115,7 @@ function main() {
         cube.adjust_cube();
     });
 
+    // Add new blocks to the scene and shift each block up
     function mine_canonical(m) {
         cubes.forEach((c) => c.y += 1.5);
         let nc = new WhiteBlock(-3, m);
@@ -145,11 +150,13 @@ function main() {
         this.x = x;
         this.y = y;
 
+        // Go in a random direction to the right
         this.drift = function () {
             this.x += Math.random() * 3;
             this.y += Math.random() * ((Math.random() < 0.5) ? 1 : -1);
         }
 
+        // Translate to ([this.x], [this.y])
         this.update = function () {
             if (this.c.position.y <= this.y) this.c.position.y += 0.1;
             else this.c.position.y -= 0.1;
@@ -157,6 +164,7 @@ function main() {
             else this.c.position.x -= 0.1;
         }
 
+        // Visibly disappear
         this.disappear = function () {
             this.c.material.transparent = true;
             this.c.material.opacity = 0;
@@ -167,6 +175,7 @@ function main() {
         Block.call(this, RED, y, mev);
         this.coins = [];
 
+        // Generate coins based on [this.mev]
         this.spawn = function () {
             for (let i = 0; i < this.mev; i++) {
                 let nc = new Coin(this.b.position.x, this.b.position.y);
@@ -176,11 +185,13 @@ function main() {
             }
         }
 
+        // Explode coins in different directions
         this.explode = function () {
             this.coins.forEach((c) => c.drift());
             this.mev = 0;
         }
 
+        // Assign all coins to a single location
         this.set_coins = function (x, y) {
             this.coins.forEach((c) => {
                 c.x = x;
@@ -300,7 +311,7 @@ function main() {
         forks.forEach((cube) => cube.move_cube_up());
         if (time - a_last >= a_rate) {
             a_last = time;
-            if (surpassed) {
+            if (surpassed) { // If fork surpassed the blocks that correspond to [mev_blocks]. Red blocks don't explode
                 let nb = new RedBlock(pass_y, 0);
                 nb.b.position.x = 2;
                 forks.push(nb);
@@ -310,7 +321,7 @@ function main() {
                     surpassed = false;
                 }
             }
-            else {
+            else { // If fork is still referencing blocks in [mev_blocks], i.e. didn't catch up. Red blocks explode
                 let tb = mev_blocks[target_block];
                 let nb = new RedBlock(tb.y, tb.mev);
                 nb.b.position.x = 2;
@@ -337,7 +348,7 @@ function main() {
     function replace_state() {
         let cond1 = false;
         let cond2 = false;
-        forks.forEach((cube) => {
+        forks.forEach((cube) => { // Move fork blocks to main. Turn them white
             if (cube.b.position.x >= 0) {
                 cube.b.position.x -= 0.1;
             } else {
@@ -346,7 +357,7 @@ function main() {
             }
         })
         let sub_cubes = cubes.slice(cubes.length - forks.length + 1);
-        sub_cubes.forEach((cube) => {
+        sub_cubes.forEach((cube) => { // Move replaced blocks left and turn grey
             if (cube.b.position.x >= -2.5) {
                 cube.b.position.x -= 0.1;
             } else {
@@ -369,16 +380,16 @@ function main() {
             camera.updateProjectionMatrix();
         }
 
-        if (state == "stable" || state == "stable2") {
+        if (state == "stable") { // Only stable (not shaking), white blocks
             stable_state(time);
-        } else if (state == "mev") {
+        } else if (state == "mev") { // White blocks begin to shake
             mev_state(time);
         }
-        else if (state == "fork") {
+        else if (state == "fork") { // Red fork blocks appear
             fork_state(time);
             stable_state(time);
         }
-        else if (state == "win") {
+        else if (state == "win") { // Red fork surpassed the main chain. zoom out
             camera.fov += 0.2;
             camera.updateProjectionMatrix();
             if (camera.fov >= 130) {
@@ -386,10 +397,10 @@ function main() {
             }
             forks.forEach((b) => b.set_coins(4.5, -2.5));
         }
-        else if (state == "zoom out") {
-            replace_state();
+        else if (state == "zoom out") { // Camera fully zoomed out
+            replace_state();    // Red blocks become canon, replaced blocks vanish
         }
-        else if (state == "replay") {
+        else if (state == "replay") { // Prepare the next config and loop back to stable
             forks.forEach((c) => c.vanish_coins());
             camera.fov -= 0.5;
             camera.updateProjectionMatrix();
@@ -409,7 +420,7 @@ function main() {
         if (time > mev_start & state == "stable") {
             state = "mev";
         }
-
+        // Make each main block rotate and vibrate
         cubes.forEach((cube, ndx) => {
             cube.move_cube_up();
             if (cube.mev != 0) cube.vibrate();
@@ -417,7 +428,7 @@ function main() {
             const rot = time * speed;
             cube.b.rotation.y = rot;
         });
-
+        // Make each fork block rotate and vibrate. Make coins spin
         forks.forEach((cube, ndx) => {
             const speed = 10 + ndx * .1;
             const rot = time * speed;
@@ -428,7 +439,7 @@ function main() {
 
         renderer.render(scene, camera);
 
-        requestAnimationFrame(render); // this is a recursive call
+        requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
 }

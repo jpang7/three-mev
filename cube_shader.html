@@ -101,8 +101,10 @@
     </script>
 
     <script id="frag_white" type="x-shader/x-fragment">
+        uniform float time;
         void main(void) {
-            gl_FragColor = vec4(1.,1.,1.,1.);
+            float c = abs(sin(time)) + .5;
+            gl_FragColor = vec4(c,c,c,c);
         }
     </script>
 
@@ -115,12 +117,6 @@
     <script id="frag_grey" type="x-shader/x-fragment">
         void main(void) {
             gl_FragColor = vec4(.5,.5,.5,.5);
-        }
-    </script>
-
-    <script id="frag_transparent" type="x-shader/x-fragment">
-        void main(void) {
-            gl_FragColor = vec4(.5,.5,.5,0.);
         }
     </script>
 
