@@ -44,6 +44,53 @@ function main() {
         return needResize;
     }
 
+    const uniforms1 = {
+        "time": { value: 1.0 }
+    };
+
+    var params = [
+        ['frag_white', uniforms1],
+        ['frag_red', uniforms1],
+        ['frag_grey', uniforms1],
+        ['frag_transparent', uniforms1]
+    ];
+
+    const WHITE = 0xFFFFFF;
+    const RED = 0xFF0000;
+    const GREY = 0x52527A;
+
+    let white_material = new THREE.ShaderMaterial({
+        uniforms: params[0][1],
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById(params[0][0]).textContent
+    })
+
+    let red_material = new THREE.ShaderMaterial({
+        uniforms: params[1][1],
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById(params[1][0]).textContent
+    })
+
+    let grey_material = new THREE.ShaderMaterial({
+        uniforms: params[2][1],
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById(params[2][0]).textContent
+    })
+
+    let transparent_material = new THREE.MeshPhongMaterial({ WHITE })
+
+    function colored_material(c) {
+        if (c == WHITE) return white_material
+        else if (c == RED) return red_material
+        else if (c == GREY) return grey_material
+    }
+
+    // var shader_material = new THREE.ShaderMaterial({
+    //     uniforms: params[0][1],
+    //     vertexShader: document.getElementById('vertexShader').textContent,
+    //     fragmentShader: document.getElementById(params[0][0]).textContent
+    // })
+
     // ART
 
     //block geometry
@@ -53,8 +100,8 @@ function main() {
     const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
 
     function makeInstance(geometry, color, y) {
-        const material = new THREE.MeshPhongMaterial({ color });
-        const cube = new THREE.Mesh(geometry, material);
+        // const material = new THREE.MeshPhongMaterial({ color });
+        const cube = new THREE.Mesh(geometry, colored_material(color));
         scene.add(cube);
         cube.position.y = y;
         return cube;
@@ -89,14 +136,15 @@ function main() {
         }
 
         this.vanish = function () {
+            this.b.material = transparent_material;
             this.b.material.transparent = true;
             this.b.material.opacity = 0;
         }
-    }
 
-    const WHITE = 0xFFFFFF;
-    const RED = 0xFF0000;
-    const GREY = 0x52527A;
+        this.change_color = function (color) {
+            this.b.material = colored_material(color)
+        }
+    }
 
     function WhiteBlock(y, mev) {
         Block.call(this, WHITE, y, mev);
@@ -342,7 +390,7 @@ function main() {
                 cube.b.position.x -= 0.1;
             } else {
                 cond1 = true;
-                cube.b.material.color.setHex(WHITE);
+                cube.change_color(WHITE);
             }
         })
         let sub_cubes = cubes.slice(cubes.length - forks.length + 1);
@@ -351,7 +399,7 @@ function main() {
                 cube.b.position.x -= 0.1;
             } else {
                 cond2 = true;
-                cube.b.material.color.setHex(GREY);
+                cube.change_color(GREY);
             }
         })
         if (cond1 & cond2) {
