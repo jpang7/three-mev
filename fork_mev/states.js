@@ -34,21 +34,23 @@ function Chain() {
         this.fork.forEach((block) => block.collect_coins(4.5, -2.5))
     }
     this.vanish_coins = function () {
-        this.fork.forEach((b) => b.vanish_coins())
+        this.fork.forEach((b) => b.eat_coins())
+    }
+    this.turn_invalid = function (mev_block) {
+        this.main.forEach((block, ndx) => {
+            if (ndx >= mev_block) {
+                block.shift_x(-2.5);
+                if (block.b.position.x <= -2.5) block.become_invalid();
+            }
+        })
+        return this.main.slice(mev_block).every((block) => { return block.b.position.x <= -2.5 });
     }
     this.turn_canonical = function () {
-        this.main.forEach((block) => {
-            if (block.b.position.x >= 0) block.b.position.x -= 0.5;
-            else block.become_canon();
-        })
-        return this.main.every((block) => { return block.b.position.x < 0 });
-    }
-    this.turn_invalid = function () {
         this.fork.forEach((block) => {
-            if (block.b.position.x >= -2.5) block.b.position.x -= 0.5;
-            else block.become_invalid();
+            block.shift_x(0);
+            if (block.b.position.x <= 0) block.become_canon();
         })
-        return this.main.every((block) => { return block.b.position.x < -2.5 });
+        return this.main.every((block) => { return block.b.position.x <= 0 });
     }
     this.always_main = function (time) {
         this.main.forEach((block, ndx) => {
@@ -78,16 +80,15 @@ const default_config = {
     mev_block_to_fork_from: 2,
 };
 
-function State(config) {
+function State(config, chain) {
     this.config = config;
     this.state = "stable";
     this.time_honest_last_mined = 0;
-    this.chain = new Chain();
+    this.chain = chain;
 
     this.always = function (time) {
         this.chain.always_main(time);
         this.chain.always_fork(time);
-        // this.chain.always_coins(time);
         if (time > this.config.mev_start_time & this.state == "stable") this.state = "unstable";
     }
 
@@ -138,7 +139,7 @@ function State(config) {
             this.time_adversary_last_mined = now;
             let latest_b = this.chain.latest_fork();
             this.chain.mine_fork(latest_b.y - 1.5, 0);
-            if (this.chain.latest_fork_y() <= -6) this.state = "win";
+            if (this.chain.latest_fork_y() <= -4.5) this.state = "win";
         }
         if (now - this.time_honest_last_mined >= config.honest_miner_rate) {
             this.time_honest_last_mined = now;
@@ -156,7 +157,7 @@ function State(config) {
     }
 
     this.replace = function () {
-        let main_moved = this.chain.turn_invalid();
+        let main_moved = this.chain.turn_invalid(config.mev_block_to_fork_from);
         let forks_moved = this.chain.turn_canonical();
         if (main_moved & forks_moved) {
             this.state = "loop";

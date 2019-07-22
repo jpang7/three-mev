@@ -45,7 +45,8 @@ function main() {
         return needResize;
     }
 
-    let s = new State(default_config);
+    let c = new Chain();
+    let s = new State(default_config, c);
 
     function render(time) {
         time *= 0.001;

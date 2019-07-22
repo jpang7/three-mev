@@ -33,10 +33,10 @@ function Block(c, y, mev) {
     this.shift_y = function (y) { this.y = y; }
     this.translate_y = function (y) { this.y += y; }
     this.update = function () {
-        if (this.b.position.y < this.y) this.b.position.y += 0.5;
-        else if (this.b.position.y > this.y) this.b.position.y -= 0.5;
-        if (this.b.position.x < this.x) this.b.position.x += 0.5;
-        else if (this.b.position.x > this.x) this.b.position.x -= 0.5;
+        if (this.b.position.y < this.y) this.b.position.y += 0.1;
+        else if (this.b.position.y > this.y) this.b.position.y -= 0.1;
+        if (this.b.position.x < this.x) this.b.position.x += 0.1;
+        else if (this.b.position.x > this.x) this.b.position.x -= 0.1;
     }
     this.vanish = function () {
         this.b.material.transparent = true;
