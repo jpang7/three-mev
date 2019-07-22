@@ -102,15 +102,6 @@ function main() {
         Block.call(this, WHITE, y, mev);
     }
 
-    let cubes = [];
-    for (let i = 0; i < 6; i++) {
-        cubes.push(new WhiteBlock(-3 + i * 1.5, 0));
-    }
-
-    cubes.forEach((cube) => {
-        cube.adjust_cube();
-    });
-
     function mine_canonical(m) {
         cubes.forEach((c) => c.y += 1.5);
         let nc = new WhiteBlock(-3, m);
@@ -120,7 +111,7 @@ function main() {
     }
 
     // coin class + methods
-    const coin_texture = new THREE.TextureLoader().load('gcoin.jpg');
+    const coin_texture = new THREE.TextureLoader().load('../gcoin.jpg');
     const radius_top = 0.1;
     const radius_bot = 0.1;
     const height = 0.01;
@@ -185,10 +176,6 @@ function main() {
                 c.x = x;
                 c.y = y;
             })
-        }
-
-        this.shift_coins = function (y) {
-            this.coins.forEach((c) => c.y += y);
         }
 
         this.update_coins = function () {
@@ -285,10 +272,7 @@ function main() {
             }
         }
         if (time - last >= block_rate) {
-            forks.forEach((cube) => {
-                cube.shift_coins(1.5);
-                cube.y += 1.5
-            });
+            forks.forEach((cube) => cube.y += 1.5);
             pass_y += 1.5;
         }
     }
@@ -350,15 +334,16 @@ function main() {
         }
         else if (state == "replay") {
             forks.forEach((c) => c.vanish_coins());
+            let sub_cubes = cubes.slice(cubes.length - forks.length + 1);
+            sub_cubes.forEach((c) => c.vanish());
+            cubes = cubes.concat(forks);
+            forks = [];
+
             camera.fov -= 0.5;
             camera.updateProjectionMatrix();
             if (camera.fov <= 75) {
                 state = "stable2"
-                let sub_cubes = cubes.slice(cubes.length - forks.length + 1);
-                sub_cubes.forEach((c) => c.vanish());
-                cubes = cubes.concat(forks);
                 cubes.forEach((cube) => cube.y += 1.5);
-                forks = [];
             }
         }
 
