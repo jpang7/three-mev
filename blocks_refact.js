@@ -140,8 +140,8 @@ function main() {
         return coin;
     }
 
-    function Coin(x,y) {
-        this.c = makeCoin(x,y);
+    function Coin(x, y) {
+        this.c = makeCoin(x, y);
         this.x = x;
         this.y = y;
 
@@ -180,7 +180,7 @@ function main() {
             this.coins.forEach((c) => c.drift());
         }
 
-        this.set_coins = function (x,y) {
+        this.set_coins = function (x, y) {
             this.coins.forEach((c) => {
                 c.x = x;
                 c.y = y;
@@ -200,7 +200,7 @@ function main() {
         }
 
         this.spin_coins = function (time) {
-            this.coins.forEach((coin,ndx) => {
+            this.coins.forEach((coin, ndx) => {
                 const speed = 1 + ndx * .01;
                 const rot = time * speed;
                 coin.c.rotation.x = rot;
@@ -219,16 +219,46 @@ function main() {
         target_block: 2,
     };
 
-    var config = default_config
+    function gen_rand_config() {
+        let mev_lst = [];
+        let len = Math.round(Math.random() * 10);
+        for (let i = 0; i < len; i++) {
+            mev_lst.push(Math.round(Math.random() * 20));
+        }
+        return {
+            block_rate: Math.random() * 2,
+            a_rate: Math.random(),
+            mev_start: Math.round(Math.random() * 10),
+            mev_lst: mev_lst,
+            target_block: Math.round(Math.random() * mev_lst.length)
+        }
+    }
+
+    var config_lst = [
+        default_config,
+        gen_rand_config(),
+        gen_rand_config(),
+        gen_rand_config(),
+        gen_rand_config()
+    ]
+
+    console.log(config_lst)
+    var config_count = 0;
 
     var last = 0;
     var a_last = 0;
 
-    var block_rate = config.block_rate;
-    var a_rate = config.a_rate;
-    var mev_start = config.mev_start;
-    var mev_lst = config.mev_lst;
-    var target_block = config.target_block;
+    var block_rate, a_rate, mev_start, mev_lst, target_block;
+
+    function set_config(config) {
+        block_rate = config.block_rate;
+        a_rate = config.a_rate;
+        mev_start = config.mev_start;
+        mev_lst = config.mev_lst;
+        target_block = config.target_block;
+    }
+
+    set_config(config_lst[0]);
 
     var forks = [];
     var surpassed = false;
@@ -268,7 +298,10 @@ function main() {
                 nb.b.position.x = 2;
                 forks.push(nb);
                 pass_y -= 1.5;
-                if (pass_y == -6) state = "win";
+                if (pass_y == -6) {
+                    state = "win";
+                    surpassed = false;
+                }
             }
             else {
                 let tb = mev_blocks[target_block];
@@ -281,6 +314,7 @@ function main() {
                 if (target_block == mev_blocks.length) {
                     surpassed = true;
                     pass_y = tb.y - 1.5;
+                    mev_blocks = [];
                 }
             }
         }
@@ -343,7 +377,7 @@ function main() {
             if (camera.fov >= 130) {
                 state = "zoom out";
             }
-            forks.forEach((b) => b.set_coins(4.5,-2.5));
+            forks.forEach((b) => b.set_coins(4.5, -2.5));
         }
         else if (state == "zoom out") {
             replace_state();
@@ -353,7 +387,10 @@ function main() {
             camera.fov -= 0.5;
             camera.updateProjectionMatrix();
             if (camera.fov <= 75) {
-                state = "stable2"
+                config_count++;
+                set_config(config_lst[config_count]);
+                mev_start += time;
+                state = "stable"
                 let sub_cubes = cubes.slice(cubes.length - forks.length + 1);
                 sub_cubes.forEach((c) => c.vanish());
                 cubes = cubes.concat(forks);
