@@ -1,11 +1,13 @@
 'use strict';
 
 /* global THREE */
+var THREE = require('three');
 
 // import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-// import EffectComposer from 'three/examples/jsm/postprocessing/EffectComposer.js';
-// import RenderPass from 'three/examples/jsm/postprocessing/RenderPass.js';
-// import UnrealBloomPass from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
 
 function main() {
     // ============= three.js setup =============
@@ -41,6 +43,9 @@ function main() {
         scene.add(light2);
     }
 
+    var pointLight = new THREE.PointLight(0x008080, 1);
+    camera.add(pointLight);
+
     function resizeRendererToDisplaySize(renderer) {
         const canvas = renderer.domElement;
         const pixelRatio = window.devicePixelRatio;
@@ -53,15 +58,21 @@ function main() {
         return needResize;
     }
 
-    // var renderScene = new RenderPass(scene, camera);
-    // var bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-    // bloomPass.threshold = 0;
-    // bloomPass.strength = 1.5;
-    // bloomPass.radius = 0;
+    var renderScene = new RenderPass(scene, camera);
+    var bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+    bloomPass.threshold = 0;
+    bloomPass.strength = 1;
+    bloomPass.radius = 0.1;
 
-    // var composer = new EffectComposer(renderer);
-    // composer.addPass(renderScene);
-    // composer.addPass(bloomPass);
+    var filmPass = new FilmPass(
+        0.35, 0.025, 648, false
+    );
+    filmPass.renderToScreen = true;
+
+    var composer = new EffectComposer(renderer);
+    composer.addPass(renderScene);
+    composer.addPass(bloomPass);
+    composer.addPass(filmPass);
 
     // ============= shaders ============= 
 
@@ -295,7 +306,7 @@ function main() {
     // ============= coin classes =============    
 
     // coin class + methods
-    const coin_texture = new THREE.TextureLoader().load('gcoin.jpg');
+    const coin_texture = new THREE.TextureLoader().load('../gcoin.jpg');
     const radius_top = 0.12;
     const radius_bot = 0.12;
     const height = 0.01;
@@ -625,9 +636,11 @@ function main() {
     }
 
     // ============= render =============    
-
+    let then = 0;
     function render(time) {
         time *= 0.001;
+        const deltaTime = time - then;
+        then = time;
 
         var delta = clock.getDelta();
         uniforms1["time"].value += delta * 5;
@@ -636,6 +649,7 @@ function main() {
             const canvas = renderer.domElement; // updates aspect based on window size
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();
+            composer.setSize(canvas.width, canvas.height);
         }
 
         if (state == "stable") { // Only stable (not shaking), white blocks
@@ -720,7 +734,7 @@ function main() {
             cube.b.rotation.y = rot;
         });
 
-        renderer.render(scene, camera);
+        composer.render(deltaTime);
 
         requestAnimationFrame(render); // this is a recursive call
     }
