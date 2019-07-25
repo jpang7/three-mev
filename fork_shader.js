@@ -81,12 +81,55 @@ function main() {
         fragmentShader: document.getElementById(params[2][0]).textContent
     })
 
+    let uniforms_2 = {
+        colorB: { type: 'vec3', value: new THREE.Color(0xACB6E5) },
+        colorA: { type: 'vec3', value: new THREE.Color(0x74ebd5) }
+    }
+
+    function vertexShader() {
+        return `
+            varying vec3 vUv;
+
+            void main() {
+                vUv = position;
+                vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
+                gl_Position = projectionMatrix * modelViewPosition;
+            }
+        `
+    }
+    function fragmentShader1() {
+        return `
+            varying vec3 vUv;
+            uniform vec3 colorA;
+            uniform vec3 colorB;
+
+            vec3 white = vec3(1.,1.,1.);
+
+            void main() {
+                gl_FragColor=vec4(mix(white,colorA,vUv.z),1.0);
+            }
+        `
+    }
+    let material_2 = new THREE.ShaderMaterial({
+        uniforms: uniforms_2,
+        fragmentShader: fragmentShader1(),
+        vertexShader: vertexShader(),
+    })
+
     let transparent_material = new THREE.MeshPhongMaterial({ WHITE })
 
+    let white_phong = new THREE.MeshPhongMaterial({ WHITE });
+    let red_phong = new THREE.MeshPhongMaterial({ RED });
+    let grey_phong = new THREE.MeshPhongMaterial({ GREY });
+
     function colored_material(c) {
-        if (c == WHITE) return white_material
-        else if (c == RED) return red_material
-        else if (c == GREY) return grey_material
+        // if (c == WHITE) return white_material
+        // if (c == WHITE) return material_2
+        // else if (c == RED) return red_material
+        // else if (c == GREY) return grey_material
+        if (c == WHITE) return white_phong
+        else if (c == RED) return red_phong
+        else if (c == GREY) return grey_phong
     }
 
     // ART
@@ -98,8 +141,9 @@ function main() {
     const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
 
     function makeInstance(geometry, color, y) {
-        // const material = new THREE.MeshPhongMaterial({ color });
-        const cube = new THREE.Mesh(geometry, colored_material(color));
+        const material = new THREE.MeshPhongMaterial({ color });
+        // const material = colored_material(color);
+        const cube = new THREE.Mesh(geometry, material);
         scene.add(cube);
         cube.position.y = y;
         return cube;
@@ -136,6 +180,10 @@ function main() {
             }
         }
 
+        this.appear = function () {
+            this.b.material.opacity = 100;
+        }
+
         // Visibly disappear
         this.vanish = function () {
             this.b.material = transparent_material;
@@ -167,13 +215,125 @@ function main() {
         let nc = new WhiteBlock(-3, m);
         nc.adjust_cube();
         cubes.push(nc);
+        playBuildAnimation();
+
+        return nc;
+    }
+
+    function makeTx(color) {
+        const boxWidth = 0.33;
+        const boxHeight = 0.33;
+        const boxDepth = 0.33;
+        const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+        const material = new THREE.MeshPhongMaterial({ color });
+        const tx = new THREE.Mesh(geometry, material);
+        scene.add(tx);
+        // tx.position.x = 
+        // tx.position.y = 
+        return tx;
+    }
+
+    function Tx(x, y, z, color) {
+        this.t = makeTx(color);
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.ut = 0;
+
+        this.update = function (time) {
+            const speed = 0.33;
+            if (this.ut < time) {
+                let dist_x = Math.abs(this.t.position.x - this.x);
+                let dist_y = Math.abs(this.t.position.y - this.y);
+                let dist_z = Math.abs(this.t.position.z - this.z);
+
+                let dir_x = (this.t.position.x < this.x) ? 1 : -1;
+                let dir_y = (this.t.position.y < this.y) ? 1 : -1;
+                let dir_z = (this.t.position.z < this.z) ? 1 : -1;
+
+                this.t.position.x += Math.min(speed, dist_x) * dir_x;
+                this.t.position.y += Math.min(speed, dist_y) * dir_y;
+                this.t.position.z += Math.min(speed, dist_z) * dir_z;
+            }
+        }
+
+        this.aligned = function () {
+            return ((this.t.position.x == this.x) &
+                (this.t.position.y == this.y) &
+                (this.t.position.z == this.z))
+        }
+
+        this.vanish = function () {
+            this.t.material.transparent = true;
+            this.t.material.opacity = 0;
+        }
+
+        this.reset = function () {
+            this.x = 0;
+            this.y = 0;
+            this.z = 0;
+            this.t.position.x = 0;
+            this.t.position.y = 0;
+            this.t.position.z = 0;
+        }
+
+        this.appear = function () {
+            this.t.material.opacity = 100;
+        }
+    }
+
+    function InitTx() {
+        Tx.call(this, 0, 0, 0, WHITE);
+    }
+
+    var tx_lst = [];
+    for (let i = 0; i < 27; i++) {
+        tx_lst.push(new InitTx());
+    }
+
+    tx_lst.forEach((t) => t.vanish());
+
+    function parametrize(t) {
+        let x = t % 3;
+        if (x == 0) x = 3;
+        let y = Math.ceil(t / 9);
+        let z = t % 9;
+        if (z == 0) z = 9;
+        z = Math.ceil(z / 3);
+        return [x, y, z];
+    }
+
+    let reset = false;
+
+    function playBuildAnimation(time) { // set parameters so 
+        console.log("building")
+        tx_lst.forEach((tx, ndx) => {
+            tx.appear();
+            let coords = parametrize(ndx + 1);
+            tx.x = -0.6 + coords[0] * .33;
+            tx.y = -3.5 + coords[1] * .33;
+            tx.z = -0.5 + coords[2] * .33;
+            tx.ut = (ndx + 1) * (block_rate / 27) + time;
+            if (ndx == (tx_lst.length - 1)) reset = true;
+        })
+    }
+
+    function mine_canonical2(m, time) {
+        cubes.forEach((c) => c.y += 1.5);
+
+        playBuildAnimation(time); // signal play/change a boolean. doesn't need a stop. just a function called in render
+
+        let nc = new WhiteBlock(-3, m);
+        nc.adjust_cube();
+        nc.vanish();
+        cubes.push(nc);
         return nc;
     }
 
     // coin class + methods
     const coin_texture = new THREE.TextureLoader().load('gcoin.jpg');
-    const radius_top = 0.1;
-    const radius_bot = 0.1;
+    const radius_top = 0.12;
+    const radius_bot = 0.12;
     const height = 0.01;
     const r_segments = 100;
     const coin_geometry = new THREE.CylinderGeometry(
@@ -201,12 +361,18 @@ function main() {
             this.y += Math.random() * ((Math.random() < 0.5) ? 1 : -1);
         }
         // Translate to ([this.x], [this.y])
-        this.update = function () {
-            if (this.c.position.y <= this.y) this.c.position.y += 0.1;
-            else this.c.position.y -= 0.1;
-            if (this.c.position.x <= this.x) this.c.position.x += 0.1;
-            else this.c.position.x -= 0.1;
+        this.update = function (time) {
+            const speed = 0.1;
+            let dist_x = Math.abs(this.c.position.x - this.x);
+            let dist_y = Math.abs(this.c.position.y - this.y);
+
+            let dir_x = (this.c.position.x < this.x) ? 1 : -1;
+            let dir_y = (this.c.position.y < this.y) ? 1 : -1;
+
+            this.c.position.x += Math.min(speed, dist_x) * dir_x;
+            this.c.position.y += Math.min(speed, dist_y) * dir_y;
         }
+
         // Visibly disappear
         this.disappear = function () {
             this.c.material.transparent = true;
@@ -328,6 +494,7 @@ function main() {
         if (time - last >= block_rate) {
             last = time;
             let nc = mine_canonical(0);
+            // let nc = mine_canonical2(0, time);
         }
     }
 
@@ -342,6 +509,7 @@ function main() {
                 state = "fork";
             }
             let nc = mine_canonical(mev);
+            // let nc = mine_canonical2(mev, time);
             mev_blocks.push(nc);
         }
     }
@@ -461,6 +629,17 @@ function main() {
 
         if (time > mev_start & state == "stable") {
             state = "mev";
+        }
+
+        tx_lst.forEach((t) => t.update(time))
+
+        if (reset & time > tx_lst[tx_lst.length - 1].ut) {
+            // cubes[cubes.length - 1].appear();
+            reset = false;
+            tx_lst.forEach((t) => {
+                t.reset();
+                t.vanish();
+            })
         }
 
         // Make each main block rotate and vibrate
