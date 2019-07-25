@@ -3,6 +3,8 @@
 /* global THREE */
 
 function main() {
+    // ============= setup =============
+
     const canvas = document.querySelector('#c');
     const renderer = new THREE.WebGLRenderer({ canvas });
 
@@ -45,6 +47,8 @@ function main() {
         }
         return needResize;
     }
+
+    // ============= shaders ============= 
 
     const uniforms1 = {
         "time": { value: 1.0 }
@@ -118,6 +122,8 @@ function main() {
 
     let transparent_material = new THREE.MeshPhongMaterial({ WHITE })
 
+    // ============= phong material =============    
+
     let white_phong = new THREE.MeshPhongMaterial({ WHITE });
     let red_phong = new THREE.MeshPhongMaterial({ RED });
     let grey_phong = new THREE.MeshPhongMaterial({ GREY });
@@ -132,94 +138,7 @@ function main() {
         else if (c == GREY) return grey_phong
     }
 
-    // ART
-
-    //block geometry
-    const boxWidth = 1;
-    const boxHeight = 1;
-    const boxDepth = 1;
-    const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
-
-    function makeInstance(geometry, color, y) {
-        const material = new THREE.MeshPhongMaterial({ color });
-        // const material = colored_material(color);
-        const cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
-        cube.position.y = y;
-        return cube;
-    }
-
-    // Block class + methods
-    function Block(color, y, mev) {
-        this.b = makeInstance(geometry, color, y);
-        this.mev = mev;
-        this.y = y;
-
-        // Create a small tilt that distinguishes each block
-        this.adjust_cube = function () {
-            let dir = (Math.random() < 0.5) ? 1 : -1;
-            this.b.rotateY(Math.random() * 0.5 * dir);
-        }
-
-        // Translate block to [this.y]
-        this.move_cube_up = function () {
-            if (this.b.position.y <= this.y) this.b.position.y += 0.1;
-        }
-
-        // Create a vibrating effect
-        this.vibrate = function () {
-            const speed = this.mev * 0.01;
-            let pos = Math.random() < 0.5 ? 1 : -1;
-            let dir = Math.random();
-            if (dir < 0.33) {
-                this.b.rotateX(speed * Math.random() * pos);
-            } else if (dir < 0.66) {
-                this.b.rotateY(speed * Math.random() * pos);
-            } else {
-                this.b.rotateZ(speed * Math.random() * pos);
-            }
-        }
-
-        this.appear = function () {
-            this.b.material.opacity = 100;
-            this.b.material.transparent = false;
-        }
-
-        // Visibly disappear
-        this.vanish = function () {
-            this.b.material.transparent = true;
-            this.b.material.opacity = 0;
-        }
-
-        this.change_color = function (color) {
-            this.b.material = colored_material(color)
-        }
-    }
-
-    function WhiteBlock(y, mev) {
-        Block.call(this, WHITE, y, mev);
-    }
-
-    let cubes = [];
-    for (let i = 0; i < 6; i++) {
-        cubes.push(new WhiteBlock(-3 + i * 1.5, 0));
-    }
-
-    cubes.forEach((cube) => {
-        cube.adjust_cube();
-    });
-
-    // Add new blocks to the scene and shift each block up
-    function mine_canonical(m, time) {
-        cubes.forEach((c) => c.y += 1.5);
-        let nc = new WhiteBlock(-3, m);
-        nc.adjust_cube();
-        nc.vanish();
-        cubes.push(nc);
-        playBuildAnimation(time);
-
-        return nc;
-    }
+    // ============= transactions (mining blocks) =============    
 
     function makeTx(color, x, y) {
         const boxWidth = 0.33;
@@ -306,6 +225,7 @@ function main() {
 
     bad_tx_lst.forEach((t) => t.vanish());
 
+    // assigns position in block based on index. max index = 27
     function parametrize(t) {
         let x = t % 3;
         if (x == 0) x = 3;
@@ -344,17 +264,20 @@ function main() {
         })
     }
 
-    function mine_canonical2(m, time) {
+    // mining function
+    // Add new blocks to the scene and shift each block up
+    function mine_canonical(m, time) {
         cubes.forEach((c) => c.y += 1.5);
-
-        playBuildAnimation(time); // signal play/change a boolean. doesn't need a stop. just a function called in render
-
         let nc = new WhiteBlock(-3, m);
         nc.adjust_cube();
         nc.vanish();
         cubes.push(nc);
+        playBuildAnimation(time);
+
         return nc;
     }
+
+    // ============= coin classes =============    
 
     // coin class + methods
     const coin_texture = new THREE.TextureLoader().load('gcoin.jpg');
@@ -406,6 +329,84 @@ function main() {
         }
     }
 
+    // ============= block classes =============    
+
+    //block geometry
+    const boxWidth = 1;
+    const boxHeight = 1;
+    const boxDepth = 1;
+    const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+
+    function makeInstance(geometry, color, y) {
+        const material = new THREE.MeshPhongMaterial({ color });
+        // const material = colored_material(color);
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+        cube.position.y = y;
+        return cube;
+    }
+
+    // Block class + methods
+    function Block(color, y, mev) {
+        this.b = makeInstance(geometry, color, y);
+        this.mev = mev;
+        this.y = y;
+
+        // Create a small tilt that distinguishes each block
+        this.adjust_cube = function () {
+            let dir = (Math.random() < 0.5) ? 1 : -1;
+            this.b.rotateY(Math.random() * 0.5 * dir);
+        }
+
+        // Translate block to [this.y]
+        this.move_cube_up = function () {
+            if (this.b.position.y <= this.y) this.b.position.y += 0.1;
+        }
+
+        // Create a vibrating effect
+        this.vibrate = function () {
+            const speed = this.mev * 0.01;
+            let pos = Math.random() < 0.5 ? 1 : -1;
+            let dir = Math.random();
+            if (dir < 0.33) {
+                this.b.rotateX(speed * Math.random() * pos);
+            } else if (dir < 0.66) {
+                this.b.rotateY(speed * Math.random() * pos);
+            } else {
+                this.b.rotateZ(speed * Math.random() * pos);
+            }
+        }
+
+        this.appear = function () {
+            this.b.material.opacity = 100;
+            this.b.material.transparent = false;
+        }
+
+        // Visibly disappear
+        this.vanish = function () {
+            this.b.material.transparent = true;
+            this.b.material.opacity = 0;
+        }
+
+        this.change_color = function (color) {
+            this.b.material = colored_material(color)
+        }
+    }
+
+    function WhiteBlock(y, mev) {
+        Block.call(this, WHITE, y, mev);
+    }
+
+    let cubes = [];
+    for (let i = 0; i < 6; i++) {
+        cubes.push(new WhiteBlock(-3 + i * 1.5, 0));
+    }
+
+    cubes.forEach((cube) => {
+        cube.adjust_cube();
+    });
+
+    // Red Blocks explode coins
     function RedBlock(y, mev) {
         Block.call(this, RED, y, mev);
         this.coins = [];
@@ -453,7 +454,7 @@ function main() {
         }
     }
 
-    // states
+    // ============= configs/data to animate =============    
 
     const default_config = {
         block_rate: 1,
@@ -499,6 +500,7 @@ function main() {
 
     var block_rate, a_rate, mev_start, mev_lst, target_block;
 
+    // sync state with config
     function set_config(config) {
         block_rate = config.block_rate;
         a_rate = config.a_rate;
@@ -508,6 +510,8 @@ function main() {
     }
 
     set_config(config_lst[0]);
+
+    // ============= state managers =============    
 
     var forks = [];
     var surpassed = false;
@@ -520,7 +524,6 @@ function main() {
         if (time - last >= block_rate) {
             last = time;
             let nc = mine_canonical(0, time);
-            // let nc = mine_canonical2(0, time);
         }
     }
 
@@ -535,7 +538,6 @@ function main() {
                 state = "fork";
             }
             let nc = mine_canonical(mev, time);
-            // let nc = mine_canonical2(mev, time);
             mev_blocks.push(nc);
         }
     }
@@ -607,7 +609,8 @@ function main() {
         }
     }
 
-    //render
+    // ============= render =============    
+
     function render(time) {
         time *= 0.001;
 
@@ -664,6 +667,7 @@ function main() {
         tx_lst.forEach((t) => t.update(time))
         bad_tx_lst.forEach((t) => t.update(time))
 
+        //reset the building blocks
         if (reset & time > tx_lst[tx_lst.length - 1].ut) {
             cubes[cubes.length - 1].appear();
             reset = false;
@@ -673,15 +677,7 @@ function main() {
             })
         }
 
-        if (reset & time > tx_lst[tx_lst.length - 1].ut) {
-            cubes[cubes.length - 1].appear();
-            reset = false;
-            tx_lst.forEach((t) => {
-                t.reset();
-                t.vanish();
-            })
-        }
-
+        //reset the building blocks for adversary
         if (a_reset & time > bad_tx_lst[bad_tx_lst.length - 1].ut) {
             forks[forks.length - 1].appear();
             a_reset = false;
