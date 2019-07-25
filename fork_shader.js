@@ -2,8 +2,13 @@
 
 /* global THREE */
 
+// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import EffectComposer from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import RenderPass from 'three/examples/jsm/postprocessing/RenderPass.js';
+import UnrealBloomPass from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+
 function main() {
-    // ============= setup =============
+    // ============= three.js setup =============
 
     const canvas = document.querySelector('#c');
     const renderer = new THREE.WebGLRenderer({ canvas });
@@ -47,6 +52,16 @@ function main() {
         }
         return needResize;
     }
+
+    var renderScene = new RenderPass(scene, camera);
+    var bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+    bloomPass.threshold = 0;
+    bloomPass.strength = 1.5;
+    bloomPass.radius = 0;
+
+    var composer = new EffectComposer(renderer);
+    composer.addPass(renderScene);
+    composer.addPass(bloomPass);
 
     // ============= shaders ============= 
 
