@@ -221,23 +221,27 @@ function main() {
         return nc;
     }
 
-    function makeTx(color) {
+    function makeTx(color, x, y) {
         const boxWidth = 0.33;
         const boxHeight = 0.33;
         const boxDepth = 0.33;
         const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
         const material = new THREE.MeshPhongMaterial({ color });
         const tx = new THREE.Mesh(geometry, material);
-        tx.position.x = -4.5;
+        tx.position.x = x;
+        tx.position.y = y;
         scene.add(tx);
         return tx;
     }
 
     function Tx(x, y, z, color) {
-        this.t = makeTx(color);
+        this.t = makeTx(color, x, y);
         this.x = x;
         this.y = y;
         this.z = z;
+        this.r_x = x;
+        this.r_y = y;
+        this.r_z = z;
         this.ut = 0;
 
         this.update = function (time) {
@@ -269,12 +273,12 @@ function main() {
         }
 
         this.reset = function () {
-            this.x = -4.5;
-            this.y = 0;
-            this.z = 0;
-            this.t.position.x = -4.5;
-            this.t.position.y = 0;
-            this.t.position.z = 0;
+            this.x = this.r_x;
+            this.y = this.r_y;
+            this.z = this.r_z;
+            this.t.position.x = this.r_x;
+            this.t.position.y = this.r_y;
+            this.t.position.z = this.r_z;
         }
 
         this.appear = function () {
@@ -286,12 +290,21 @@ function main() {
         Tx.call(this, -4.5, 0, 0, WHITE);
     }
 
+    function BadTx() {
+        Tx.call(this, 4.5, 0, 0, RED);
+    }
+
     var tx_lst = [];
     for (let i = 0; i < 27; i++) {
         tx_lst.push(new InitTx());
     }
 
-    // tx_lst.forEach((t) => t.vanish());
+    var bad_tx_lst = [];
+    for (let i = 0; i < 27; i++) {
+        bad_tx_lst.push(new BadTx());
+    }
+
+    bad_tx_lst.forEach((t) => t.vanish());
 
     function parametrize(t) {
         let x = t % 3;
@@ -314,6 +327,20 @@ function main() {
             tx.z = -0.5 + coords[2] * .33;
             tx.ut = (ndx + 1) * (block_rate / 32.5) + time;
             if (ndx == (tx_lst.length - 1)) reset = true;
+        })
+    }
+
+    let a_reset = false;
+
+    function playStealAnimation(time, y) {
+        bad_tx_lst.forEach((tx, ndx) => {
+            tx.appear();
+            let coords = parametrize(ndx + 1);
+            tx.x = 1 + coords[0] * .33;
+            tx.y = y + coords[1] * .33;
+            tx.z = -0.5 + coords[2] * .33;
+            tx.ut = (ndx + 1) * (a_rate / 60) + time;
+            if (ndx == (tx_lst.length - 1)) a_reset = true;
         })
     }
 
@@ -520,8 +547,10 @@ function main() {
             if (surpassed) { // If fork surpassed the blocks that correspond to [mev_blocks]. Red blocks don't explode
                 let nb = new RedBlock(pass_y, 0);
                 nb.b.position.x = 2;
+                nb.vanish();
                 forks.push(nb);
                 pass_y -= 1.5;
+                playStealAnimation(time, pass_y);
                 if (pass_y == -6) {
                     state = "win";
                     surpassed = false;
@@ -533,7 +562,9 @@ function main() {
                 nb.b.position.x = 2;
                 nb.spawn();
                 nb.explode();
+                nb.vanish();
                 forks.push(nb);
+                playStealAnimation(time, tb.y);
                 target_block++;
                 if (target_block == mev_blocks.length) {
                     surpassed = true;
@@ -631,11 +662,30 @@ function main() {
         }
 
         tx_lst.forEach((t) => t.update(time))
+        bad_tx_lst.forEach((t) => t.update(time))
 
         if (reset & time > tx_lst[tx_lst.length - 1].ut) {
             cubes[cubes.length - 1].appear();
             reset = false;
             tx_lst.forEach((t) => {
+                t.reset();
+                t.vanish();
+            })
+        }
+
+        if (reset & time > tx_lst[tx_lst.length - 1].ut) {
+            cubes[cubes.length - 1].appear();
+            reset = false;
+            tx_lst.forEach((t) => {
+                t.reset();
+                t.vanish();
+            })
+        }
+
+        if (a_reset & time > bad_tx_lst[bad_tx_lst.length - 1].ut) {
+            forks[forks.length - 1].appear();
+            a_reset = false;
+            bad_tx_lst.forEach((t) => {
                 t.reset();
                 t.vanish();
             })
