@@ -182,11 +182,11 @@ function main() {
 
         this.appear = function () {
             this.b.material.opacity = 100;
+            this.b.material.transparent = false;
         }
 
         // Visibly disappear
         this.vanish = function () {
-            this.b.material = transparent_material;
             this.b.material.transparent = true;
             this.b.material.opacity = 0;
         }
@@ -210,12 +210,13 @@ function main() {
     });
 
     // Add new blocks to the scene and shift each block up
-    function mine_canonical(m) {
+    function mine_canonical(m, time) {
         cubes.forEach((c) => c.y += 1.5);
         let nc = new WhiteBlock(-3, m);
         nc.adjust_cube();
+        nc.vanish();
         cubes.push(nc);
-        playBuildAnimation();
+        playBuildAnimation(time);
 
         return nc;
     }
@@ -227,9 +228,8 @@ function main() {
         const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
         const material = new THREE.MeshPhongMaterial({ color });
         const tx = new THREE.Mesh(geometry, material);
+        tx.position.x = -4.5;
         scene.add(tx);
-        // tx.position.x = 
-        // tx.position.y = 
         return tx;
     }
 
@@ -269,10 +269,10 @@ function main() {
         }
 
         this.reset = function () {
-            this.x = 0;
+            this.x = -4.5;
             this.y = 0;
             this.z = 0;
-            this.t.position.x = 0;
+            this.t.position.x = -4.5;
             this.t.position.y = 0;
             this.t.position.z = 0;
         }
@@ -283,7 +283,7 @@ function main() {
     }
 
     function InitTx() {
-        Tx.call(this, 0, 0, 0, WHITE);
+        Tx.call(this, -4.5, 0, 0, WHITE);
     }
 
     var tx_lst = [];
@@ -291,7 +291,7 @@ function main() {
         tx_lst.push(new InitTx());
     }
 
-    tx_lst.forEach((t) => t.vanish());
+    // tx_lst.forEach((t) => t.vanish());
 
     function parametrize(t) {
         let x = t % 3;
@@ -306,14 +306,13 @@ function main() {
     let reset = false;
 
     function playBuildAnimation(time) { // set parameters so 
-        console.log("building")
         tx_lst.forEach((tx, ndx) => {
             tx.appear();
             let coords = parametrize(ndx + 1);
             tx.x = -0.6 + coords[0] * .33;
             tx.y = -3.5 + coords[1] * .33;
             tx.z = -0.5 + coords[2] * .33;
-            tx.ut = (ndx + 1) * (block_rate / 27) + time;
+            tx.ut = (ndx + 1) * (block_rate / 32.5) + time;
             if (ndx == (tx_lst.length - 1)) reset = true;
         })
     }
@@ -493,7 +492,7 @@ function main() {
     function stable_state(time) {
         if (time - last >= block_rate) {
             last = time;
-            let nc = mine_canonical(0);
+            let nc = mine_canonical(0, time);
             // let nc = mine_canonical2(0, time);
         }
     }
@@ -508,7 +507,7 @@ function main() {
             } else {
                 state = "fork";
             }
-            let nc = mine_canonical(mev);
+            let nc = mine_canonical(mev, time);
             // let nc = mine_canonical2(mev, time);
             mev_blocks.push(nc);
         }
@@ -634,7 +633,7 @@ function main() {
         tx_lst.forEach((t) => t.update(time))
 
         if (reset & time > tx_lst[tx_lst.length - 1].ut) {
-            // cubes[cubes.length - 1].appear();
+            cubes[cubes.length - 1].appear();
             reset = false;
             tx_lst.forEach((t) => {
                 t.reset();
