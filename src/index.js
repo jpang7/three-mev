@@ -8,6 +8,8 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
+import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass.js';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 
 function main() {
     // ============= three.js setup =============
@@ -58,21 +60,64 @@ function main() {
         return needResize;
     }
 
-    var renderScene = new RenderPass(scene, camera);
-    var bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+    // ============= loader =============
+    const loader = new FBXLoader();
+    var honest_mixer;
+    loader.load('../red_digging.fbx', function (object) {
+        honest_mixer = new THREE.AnimationMixer(object);
+        var action = honest_mixer.clipAction(object.animations[0]);
+        action.play();
+        object.scale.set(0.01, 0.01, 0.01);
+        object.position.set(-4, -1, 0);
+
+        object.traverse(function (child) {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        scene.add(object);
+    })
+
+    var adversary_mixer;
+    loader.load('../red_digging.fbx', function (object) {
+        adversary_mixer = new THREE.AnimationMixer(object);
+        var action = adversary_mixer.clipAction(object.animations[0]);
+        action.play();
+        object.scale.set(0.01, 0.01, 0.01);
+        object.position.set(4, -1, 0);
+
+        object.traverse(function (child) {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        scene.add(object);
+    })
+
+
+    // ============= post-processing =============
+
+    const renderScene = new RenderPass(scene, camera);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
     bloomPass.threshold = 0;
     bloomPass.strength = 1;
-    bloomPass.radius = 0.1;
+    bloomPass.radius = 0;
 
-    var filmPass = new FilmPass(
+    const filmPass = new FilmPass(
         0.35, 0.025, 648, false
     );
     filmPass.renderToScreen = true;
 
-    var composer = new EffectComposer(renderer);
+    const afterimagePass = new AfterimagePass();
+    afterimagePass.uniforms["damp"].value = 0.3;
+
+    const composer = new EffectComposer(renderer);
     composer.addPass(renderScene);
-    composer.addPass(bloomPass);
-    composer.addPass(filmPass);
+    // composer.addPass(bloomPass);
+    // composer.addPass(filmPass);
+    // composer.addPass(afterimagePass);
 
     // ============= shaders ============= 
 
@@ -415,7 +460,7 @@ function main() {
         }
 
         this.change_color = function (color) {
-            this.b.material = colored_material(color)
+            this.b.material.color.setHex(color);
         }
     }
 
@@ -643,6 +688,8 @@ function main() {
         then = time;
 
         var delta = clock.getDelta();
+        if (honest_mixer) honest_mixer.update(delta);
+        if (adversary_mixer) adversary_mixer.update(delta);
         uniforms1["time"].value += delta * 5;
 
         if (resizeRendererToDisplaySize(renderer)) { //changes renderer size
@@ -654,20 +701,28 @@ function main() {
 
         if (state == "stable") { // Only stable (not shaking), white blocks
             stable_state(time);
+            if (honest_mixer) honest_mixer.timeScale = 5;
+            if (adversary_mixer) adversary_mixer.timeScale = 0;
         } else if (state == "mev") { // White blocks begin to shake
             mev_state(time);
+            if (honest_mixer) honest_mixer.timeScale = 5;
+            if (adversary_mixer) adversary_mixer.timeScale = 0;
         }
         else if (state == "fork") { // Red fork blocks appear
             fork_state(time);
             stable_state(time);
+            if (honest_mixer) honest_mixer.timeScale = 5;
+            if (adversary_mixer) adversary_mixer.timeScale = 10;
         }
         else if (state == "win") { // Red fork surpassed the main chain. zoom out
+            if (honest_mixer) honest_mixer.timeScale = 0;
+            if (adversary_mixer) adversary_mixer.timeScale = 0;
             camera.fov += 0.2;
             camera.updateProjectionMatrix();
             if (camera.fov >= 130) {
                 state = "zoom out";
             }
-            forks.forEach((b) => b.set_coins(4.5, -2.5));
+            forks.forEach((b) => b.set_coins(4.5, -1.5));
         }
         else if (state == "zoom out") { // Camera fully zoomed out
             replace_state();    // Red blocks become canon, replaced blocks vanish
@@ -738,7 +793,11 @@ function main() {
 
         requestAnimationFrame(render); // this is a recursive call
     }
-    requestAnimationFrame(render);
+
+    THREE.DefaultLoadingManager.onLoad = function () {
+        requestAnimationFrame(render);
+    }
+
 }
 
 main();

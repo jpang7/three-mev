@@ -296,9 +296,11 @@ function main() {
 
     // coin class + methods
     const coin_texture = new THREE.TextureLoader().load('gcoin.jpg');
-    const radius_top = 0.12;
-    const radius_bot = 0.12;
-    const height = 0.01;
+    // const radius_top = 0.12;
+    // const radius_bot = 0.12;
+    const radius_top = 0.15;
+    const radius_bot = radius_top;
+    const height = 0.05;
     const r_segments = 100;
     const coin_geometry = new THREE.CylinderGeometry(
         radius_top, radius_bot, height, r_segments);
@@ -311,6 +313,7 @@ function main() {
         const coin = new THREE.Mesh(coin_geometry, material);
         coin.position.x = x;
         coin.position.y = y;
+        coin.position.z = 1.5;
         scene.add(coin);
         return coin;
     }
@@ -319,22 +322,27 @@ function main() {
         this.c = makeCoin(x, y);
         this.x = x;
         this.y = y;
+        this.z = 1.5;
         // Go in a random direction to the right
         this.drift = function () {
             this.x += Math.random() * 3;
             this.y += Math.random() * ((Math.random() < 0.5) ? 1 : -1);
+            this.z += Math.random() * 2;
         }
         // Translate to ([this.x], [this.y])
         this.update = function (time) {
             const speed = 0.1;
             let dist_x = Math.abs(this.c.position.x - this.x);
             let dist_y = Math.abs(this.c.position.y - this.y);
+            let dist_z = Math.abs(this.c.position.z - this.z);
 
             let dir_x = (this.c.position.x < this.x) ? 1 : -1;
             let dir_y = (this.c.position.y < this.y) ? 1 : -1;
+            let dir_z = (this.c.position.z < this.z) ? 1 : -1;
 
             this.c.position.x += Math.min(speed, dist_x) * dir_x;
             this.c.position.y += Math.min(speed, dist_y) * dir_y;
+            this.c.position.z += Math.min(speed, dist_z) * dir_z;
         }
 
         // Visibly disappear
@@ -344,15 +352,84 @@ function main() {
         }
     }
 
+    // ============= particle classes =============
+    function makeParticle(x, y, color) {
+        const geometry = new THREE.SphereGeometry(0.05, 8, 8);
+        const material = new THREE.MeshPhongMaterial({ color });
+        const particle = new THREE.Mesh(geometry, material);
+        particle.position.x = x;
+        particle.position.y = y;
+        particle.position.z = 1.3;
+        scene.add(particle);
+        return particle;
+    }
+
+    function Particle(x, y, c) {
+        this.p = makeParticle(x, y, c);
+        this.x = x;
+        this.y = y;
+
+        this.surround = function (i) {
+            let x;
+            let y;
+            if (i < 5) {
+                x = -0.5 + 0.25 * i;
+                y = 0.5 - 2.3;
+            } else if (i < 10) {
+                x = 0.5;
+                y = -0.5 + 0.25 * (i - 5) - 2.3;
+            } else if (i < 15) {
+                x = 0.5 - 0.25 * (i - 10);
+                y = -0.5 - 2.3;
+            } else {
+                x = -0.5;
+                y = 0.5 - 0.25 * (i - 15) - 2.3;
+            }
+            this.x = x;
+            this.y = y;
+        }
+
+        this.reset = function () {
+            this.x = 0;
+            this.y = 0;
+        }
+
+        this.update = function () {
+            const speed = 0.1;
+            let dist_x = Math.abs(this.p.position.x - this.x);
+            let dist_y = Math.abs(this.p.position.y - this.y);
+
+            let dir_x = (this.p.position.x < this.x) ? 1 : -1;
+            let dir_y = (this.p.position.y < this.y) ? 1 : -1;
+
+            this.p.position.x += Math.min(speed, dist_x) * dir_x;
+            this.p.position.y += Math.min(speed, dist_y) * dir_y;
+        }
+
+        this.disappear = function () {
+            this.p.material.transparent = true;
+            this.p.material.opacity = 0;
+        }
+    }
+
+    function WhiteParticle() {
+        Particle.call(this, 0, 0, WHITE);
+    }
+
+    let particles = [];
+    // for (let i = 0; i < 20; i++) {
+    //     particles.push(new WhiteParticle());
+    // }
+
+    // particles.forEach((p, ndx) => p.surround(ndx))
+
     // ============= block classes =============    
 
-    //block geometry
-    const boxWidth = 1;
-    const boxHeight = 1;
-    const boxDepth = 1;
-    const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
-
-    function makeInstance(geometry, color, y) {
+    function makeInstance(color, y) {
+        const boxWidth = 1;
+        const boxHeight = 1;
+        const boxDepth = 1;
+        const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
         const material = new THREE.MeshPhongMaterial({ color });
         // const material = colored_material(color);
         const cube = new THREE.Mesh(geometry, material);
@@ -363,7 +440,7 @@ function main() {
 
     // Block class + methods
     function Block(color, y, mev) {
-        this.b = makeInstance(geometry, color, y);
+        this.b = makeInstance(color, y);
         this.mev = mev;
         this.y = y;
 
@@ -404,7 +481,7 @@ function main() {
         }
 
         this.change_color = function (color) {
-            this.b.material = colored_material(color)
+            this.b.material.color.setHex(color);
         }
     }
 
@@ -427,7 +504,7 @@ function main() {
         this.coins = [];
         // Generate coins based on [this.mev]
         this.spawn = function () {
-            for (let i = 0; i < this.mev; i++) {
+            for (let i = 0; i < this.mev * 5; i++) {
                 let nc = new Coin(this.b.position.x, this.b.position.y);
                 nc.c.position.z = 1;
                 nc.c.rotation.x = 70;
@@ -492,7 +569,7 @@ function main() {
         }
         return {
             block_rate: 1 + Math.random(),
-            a_rate: Math.random() * .75,
+            a_rate: Math.random() * .5,
             mev_start: Math.round(Math.random() * 10),
             mev_lst: mev_lst,
             target_block: find_first_nonzero(mev_lst)
@@ -681,6 +758,7 @@ function main() {
 
         tx_lst.forEach((t) => t.update(time))
         bad_tx_lst.forEach((t) => t.update(time))
+        particles.forEach((p, ndx) => p.update())
 
         //reset the building blocks
         if (reset & time > tx_lst[tx_lst.length - 1].ut) {
