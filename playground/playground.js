@@ -125,6 +125,94 @@ function main() {
         return cube;
     }
 
+    // ============= particle classes =============
+    function makeParticle(x, y, z, color) {
+        const geometry = new THREE.SphereGeometry(0.03, 8, 8);
+        const material = new THREE.MeshPhongMaterial({ color });
+        const particle = new THREE.Mesh(geometry, material);
+        particle.position.x = x;
+        particle.position.y = y;
+        particle.position.z = z;
+        scene.add(particle);
+        return particle;
+    }
+
+    function surroundCube(x_cube, y_cube, z_cube, step_size) {
+        let particles = [];
+
+        for (let z = z_cube - 0.6; z < z_cube + 0.6 + step_size; z += step_size) {
+            for (let y = y_cube - 0.6; y < y_cube + 0.6 + step_size; y += step_size) {
+                for (let x = x_cube - 0.6; x < x_cube + 0.6 + step_size; x += step_size) {
+                    particles.push(new WhiteParticle(x, y, z));
+                }
+            }
+        }
+        return particles;
+    }
+
+    function ParticleSet(cube, step) {
+        let x = cube.b.position.x;
+        let y = cube.b.position.y;
+        let z = cube.b.position.z;
+        this.cube = cube;
+        this.step = step;
+        this.particles = surroundCube(x, y, z, step);
+        this.update_particles = function () {
+            this.particles.forEach((p) => p.update());
+        }
+        this.sync = function () {
+            let i = 0;
+            let x_cube = this.cube.b.position.x;
+            let y_cube = this.cube.b.position.y;
+            let z_cube = this.cube.b.position.z;
+            for (let z = z_cube - 0.6; z < z_cube + 0.6 + this.step; z += this.step) {
+                for (let y = y_cube - 0.6; y < y_cube + 0.6 + this.step; y += this.step) {
+                    for (let x = x_cube - 0.6; x < x_cube + 0.6 + this.step; x += this.step) {
+                        this.particles[i].set(x, y, z);
+                        i++;
+                    }
+                }
+            }
+        }
+    }
+
+    function Particle(x, y, z, c) {
+        this.p = makeParticle(x, y, z, c);
+        this.x = x;
+        this.y = y;
+        this.z = z;
+
+        this.set = function (x, y, z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        this.update = function () {
+            const speed = 0.1;
+            let dist_x = Math.abs(this.p.position.x - this.x);
+            let dist_y = Math.abs(this.p.position.y - this.y);
+
+            let dir_x = (this.p.position.x < this.x) ? 1 : -1;
+            let dir_y = (this.p.position.y < this.y) ? 1 : -1;
+
+            this.p.position.x += Math.min(speed, dist_x) * dir_x;
+            this.p.position.y += Math.min(speed, dist_y) * dir_y;
+        }
+
+        this.disappear = function () {
+            this.p.material.transparent = true;
+            this.p.material.opacity = 0;
+        }
+    }
+
+    function WhiteParticle(x, y, z) {
+        Particle.call(this, x, y, z, WHITE);
+    }
+
+
+
+
     const WHITE = 0xFFFFFF;
     const RED = 0xFF0000;
     const GREY = 0x52527A;
@@ -140,6 +228,12 @@ function main() {
         { b: white_block(3), y: 3, mev: 0 },
         { b: white_block(4.5), y: 4.5, mev: 0 },
     ]
+    console.log(cubes[0])
+
+    let ps = new ParticleSet(cubes[0], 0.3)
+    let ps1 = new ParticleSet(cubes[1], 0.3)
+
+    // surroundCube(cubes[0].b.position.x, cubes[0].b.position.y, cubes[0].b.position.z, 0.2);
 
     function adjust_cube(c) {
         let cube = c.b;
@@ -152,6 +246,8 @@ function main() {
     cubes.forEach((cube) => {
         adjust_cube(cube);
     });
+
+
 
     function resizeRendererToDisplaySize(renderer) {
         const canvas = renderer.domElement;
@@ -169,6 +265,9 @@ function main() {
     function render(time) {
         time *= 0.001;
 
+        ps.sync();
+        ps.update_particles();
+        cubes[0].b.position.y += 0.01;
 
         uniforms.iTime.value = time;
 
