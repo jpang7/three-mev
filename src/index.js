@@ -10,6 +10,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
 import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { TranslucentShader } from 'three/examples/jsm/shaders/TranslucentShader.js';
 
 function main() {
     // ============= three.js setup =============
@@ -193,9 +194,15 @@ function main() {
 
     let transparent_material = new THREE.MeshPhongMaterial({ WHITE })
 
+    const shader = TranslucentShader;
+    // var shader_uniforms = THREE.UniformsUtils.clo
+
     // ============= phong material =============    
 
-    let white_phong = new THREE.MeshPhongMaterial({ WHITE });
+    // let white_phong = new THREE.MeshPhongMaterial({ WHITE });
+    // let white_phong = new THREE.MeshPhongMaterial({
+    //     color: WHITE, specular: 0x050505, shininess: 100, reflectivity: 1
+    // })
     let red_phong = new THREE.MeshPhongMaterial({ RED });
     let grey_phong = new THREE.MeshPhongMaterial({ GREY });
 
@@ -352,7 +359,7 @@ function main() {
 
     // coin class + methods
     const coin_texture = new THREE.TextureLoader().load('../gcoin.jpg');
-    const radius_top = 0.12;
+    // const radius_top = 0.12;
     const radius_bot = 0.12;
     const height = 0.01;
     const r_segments = 100;
