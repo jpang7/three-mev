@@ -12,7 +12,7 @@ function main() {
     const fov = 75;
     const aspect = 2;
     const near = 0.1;
-    const far = 8;
+    const far = 100;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 
     //position
@@ -21,6 +21,7 @@ function main() {
 
     //scene
     const scene = new THREE.Scene();
+    // const clock = new THREE.Clock();
 
     //light
     {
@@ -150,13 +151,36 @@ function main() {
         return particles;
     }
 
-    function ParticleSet(cube, step) {
+    function ParticleSet(cube, step, time, rate) {
         let x = cube.b.position.x;
         let y = cube.b.position.y;
         let z = cube.b.position.z;
         this.cube = cube;
         this.step = step;
         this.particles = surroundCube(x, y, z, step);
+        this.final_target = [-3, 0, 0];
+        this.time = time;
+
+        this.determine_ut = function () {
+            this.particles.forEach((p, ndx) => {
+                p.ut = this.time + (ndx + 1) * (rate);
+            })
+        }
+
+        this.target_timed = function (time) {
+            this.particles.forEach((p) => {
+                if (time > p.ut) {
+                    p.set(
+                        this.final_target[0],
+                        this.final_target[1],
+                        // this.final_target[1] + Math.random(),
+                        this.final_target[2]);
+                }
+            })
+        }
+        this.target_particles = function () {
+            this.particles.forEach((p) => p.set(-3 + Math.random(), 0, 0));
+        }
         this.update_particles = function () {
             this.particles.forEach((p) => p.update());
         }
@@ -181,7 +205,7 @@ function main() {
         this.x = x;
         this.y = y;
         this.z = z;
-
+        this.ut = 0;
         this.set = function (x, y, z) {
             this.x = x;
             this.y = y;
@@ -192,12 +216,16 @@ function main() {
             const speed = 0.1;
             let dist_x = Math.abs(this.p.position.x - this.x);
             let dist_y = Math.abs(this.p.position.y - this.y);
+            let dist_z = Math.abs(this.p.position.z - this.z);
 
             let dir_x = (this.p.position.x < this.x) ? 1 : -1;
             let dir_y = (this.p.position.y < this.y) ? 1 : -1;
+            let dir_z = (this.p.position.z < this.z) ? 1 : -1;
 
             this.p.position.x += Math.min(speed, dist_x) * dir_x;
             this.p.position.y += Math.min(speed, dist_y) * dir_y;
+            this.p.position.z += Math.min(speed, dist_z) * dir_z;
+
         }
 
         this.disappear = function () {
@@ -230,8 +258,8 @@ function main() {
     ]
     console.log(cubes[0])
 
-    let ps = new ParticleSet(cubes[0], 0.3)
-    let ps1 = new ParticleSet(cubes[1], 0.3)
+    // let ps = new ParticleSet(cubes[0], 0.3)
+    // let ps1 = new ParticleSet(cubes[1], 0.3)
 
     // surroundCube(cubes[0].b.position.x, cubes[0].b.position.y, cubes[0].b.position.z, 0.2);
 
@@ -248,6 +276,49 @@ function main() {
     });
 
 
+    // ========== background ============
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letter_geometry = new THREE.BoxGeometry(3, 0.5, 0.4);
+    const letter_material = new THREE.MeshPhongMaterial({ WHITE });
+    const red_material = new THREE.MeshPhongMaterial({ RED });
+
+    var font;
+    const font_loader = new THREE.FontLoader();
+    font_loader.load('./helv.json', function (response) {
+        font = response;
+    });
+
+    for (let letter in alphabet) {
+        var letter_mesh = new THREE.Mesh(letter_geometry, letter_material);
+        letter_mesh.position.x = -8;
+        letter_mesh.position.y = -8 + 0.7 * letter;
+        letter_mesh.position.z = -5;
+        // scene.add(letter_mesh);
+
+        var letter_mesh2 = new THREE.Mesh(letter_geometry, letter_material);
+        letter_mesh2.position.x = 8;
+        letter_mesh2.position.y = -8 + 0.7 * letter;
+        letter_mesh2.position.z = -5;
+        // scene.add(letter_mesh2);
+
+        font_loader.load('./helv.json', function (font) {
+            var textGeo = new THREE.TextGeometry(alphabet[letter], {
+                font: font,
+                size: 0.3,
+                height: 0.3,
+                curveSegments: 12,
+                bevelEnabled: false
+            });
+            var mesh = new THREE.Mesh(textGeo, red_material);
+            var mesh2 = new THREE.Mesh(textGeo, red_material);
+            mesh.position.set(-8, -8 + 0.7 * letter, -5);
+            mesh2.position.set(8, -8 + 0.7 * letter, -5);
+            scene.add(mesh);
+            scene.add(mesh2);
+        })
+    }
+
+
 
     function resizeRendererToDisplaySize(renderer) {
         const canvas = renderer.domElement;
@@ -261,15 +332,35 @@ function main() {
         return needResize;
     }
 
+    let one = true;
+    let ps;
+    let two = true;
     //render
     function render(time) {
         time *= 0.001;
 
-        ps.sync();
-        ps.update_particles();
-        cubes[0].b.position.y += 0.01;
+        // ps.sync();
+
+        // cubes[0].b.position.y += 0.01;
+        if (one) {
+            ps = new ParticleSet(cubes[0], 0.3, time, 0.03);
+            ps.determine_ut();
+            console.log(ps)
+            one = false;
+        }
 
         uniforms.iTime.value = time;
+
+        ps.target_timed(time);
+
+        // if (time < 0.02) ps.sync();
+
+        // if (time >= 0.02 & two) {
+        //     // ps.target_particles();
+        //     ps.target_timed(time);
+        //     // two = false;
+        // }
+        ps.update_particles();
 
         mirrorCamera.update(renderer, scene);
 

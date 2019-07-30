@@ -55,6 +55,11 @@ function sub_render(time, honest_mixer, adversary_mixer) {
         state = "mev";
     }
 
+    particle_sets.forEach((p) => {
+        p.target_timed(time);
+        p.update_particles();
+    })
+
     tx_lst.forEach((t) => t.update(time))
     bad_tx_lst.forEach((t) => t.update(time))
 

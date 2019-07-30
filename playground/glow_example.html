@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="I'm Kade Keith, a Computer Scientist specializing in front end development. I try to make complicated things simple.">
+
+    <!-- Start social sharing meta -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@kade_keith" />
+    <meta name="twitter:title" content="THREE.js Glow" />
+    <meta name="twitter:description"
+        content="I'm Kade Keith, a Computer Scientist specializing in front end development. I try to make complicated things simple." />
+    <meta name="twitter:image" content="http://kadekeith.me/img/compressed/splash-background.png" />
+    <meta property="og:url" content="http://kadekeith.me/" />
+    <meta property="og:title" content="THREE.js Glow" />
+    <meta property="og:description"
+        content="I'm Kade Keith, a Computer Scientist specializing in front end development. I try to make complicated things simple." />
+    <meta property="og:image" content="http://kadekeith.me/img/compressed/splash-background.png" />
+    <!-- end social sharing meta -->
+
+    <title>THREE.js Glow</title>
+    <link rel="icon" href="/img/compressed/kFavicon.png">
+</head>
+
+<body>
+
+    <div id="navPanel">
+        <div id="navCanvas">
+            <nav class="standard-nav">
+                <ul>
+                    <li><a href="/about/">About</a></li>
+                    <li><a target="_blank" href="/resume/">Resume</a></li>
+                    <li><a href="/projects/">Projects</a></li>
+                    <li><a target="_blank" href="/blog/">Blog</a></li>
+                    <li><a href="/stuff/">Other Stuff</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <nav id="main-nav" class="standard-nav">
+        <div onclick="toggleSlide();" id="navButton">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </div>
+        <ul>
+            <li><a href="/about/">About</a>|</li>
+            <li><a target="_blank" href="/resume/">Resume</a>|</li>
+            <li><a href="/projects/">Projects</a>|</li>
+            <li><a target="_blank" href="/blog/">Blog</a>|</li>
+            <li><a href="/stuff/">Other Stuff</a></li>
+        </ul>
+    </nav>
+
+    <div id="mainContent">
+        <div id="wrapper">
+            <br />
+            <style>
+                #webgl-container {
+                    position: absolute;
+                    left: 0;
+                    bottom: -6px;
+                    background-color: aqua;
+                }
+            </style>
+
+            <script src="lib/three.min.js"></script>
+            <script src="lib/OrbitControls.js"></script>
+            <script src="lib/SubdivisionModifier.js"></script>
+
+            <script id="vertexShaderSun" type="x-shader/x-vertex">
+uniform vec3 viewVector;
+varying float intensity;
+void main() {
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4( position, 1.0 );
+    vec3 actual_normal = vec3(modelMatrix * vec4(normal, 0.0));
+    intensity = pow( dot(normalize(viewVector), actual_normal), 6.0 );
+}
+</script>
+
+            <script id="fragmentShaderSun" type="x-shader/x-vertex">
+varying float intensity;
+void main() {
+	vec3 glow = vec3(0, 1, 0) * intensity;
+    gl_FragColor = vec4( glow, 1.0 );
+}
+</script>
+
+            <article>
+                <h2>THREE.js Glow</h2>
+                <div id="webgl-container"></div>
+            </article>
+
+            <script>
+                /************* THREE.js boilerplate *************/
+
+                let SCENE_WIDTH = window.innerWidth;
+                let SCENE_HEIGHT = Math.max(window.innerHeight - 130, 200);
+
+                let FIELD_OF_VIEW = 45;
+                let ASPECT = SCENE_WIDTH / SCENE_HEIGHT;
+                let NEAR = 0.1;
+                let FAR = 10000;
+
+                let scene = new THREE.Scene();
+
+                /** create the renderer and add it to the scene */
+                let renderer = new THREE.WebGLRenderer();
+                renderer.setClearColor(0x8d8d8d, 1);
+                renderer.setSize(SCENE_WIDTH, SCENE_HEIGHT);
+                document.getElementById('webgl-container').appendChild(renderer.domElement);
+
+                /** create the camera and add it to the scene */
+                let camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW, ASPECT, NEAR, FAR);
+                camera.position.set(-10, 10, 10);
+                camera.lookAt(new THREE.Vector3(0, 0, 0));
+                scene.add(camera);
+
+                // main light
+                let light = new THREE.PointLight(0xffffff, 0.8); // white light
+                light.position.set(30, 100, 50);
+                scene.add(light);
+
+                let geometry = new THREE.TorusGeometry(10, 3, 16, 100);
+                let material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+                let object = new THREE.Mesh(geometry, material);
+
+                let glowMaterial = new THREE.ShaderMaterial({
+                    uniforms: {
+                        viewVector: {
+                            type: "v3",
+                            value: camera.position
+                        }
+                    },
+                    vertexShader: document.getElementById('vertexShaderSun').textContent,
+                    fragmentShader: document.getElementById('fragmentShaderSun').textContent,
+                    side: THREE.FrontSide,
+                    blending: THREE.AdditiveBlending,
+                    transparent: true
+                });
+
+                let glowGeometry = new THREE.TorusGeometry(10, 5, 16, 100);
+
+                let glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+                object.add(glowMesh);
+                object.glow = glowMesh;
+                scene.add(object);
+
+                let controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+                function update() {
+                    let viewVector = new THREE.Vector3().subVectors(camera.position, object.glow.getWorldPosition());
+                    object.glow.material.uniforms.viewVector.value = viewVector;
+
+                    renderer.render(scene, camera);
+                    requestAnimationFrame(update);
+                }
+                requestAnimationFrame(update);
+
+            </script>
+
+        </div>
+    </div>
+
+</body>
+
+<link rel="stylesheet" href=" /css/main.css ">
+<script src="/slider.js"></script>
+<link href='http://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'>
+
+<!-- Google analytics -->
+<script>
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function () {
+            (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+            m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-71899560-1', 'auto');
+    ga('send', 'pageview');
+</script>
+
+</html>

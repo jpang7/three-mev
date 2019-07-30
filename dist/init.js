@@ -1,5 +1,5 @@
 const WHITE = 0xFFFFFF;
-const RED = 0xFF0000;
+const RED = 0xFF1493;
 const GREY = 0x52527A;
 
 const canvas = document.querySelector('#c');
@@ -23,9 +23,10 @@ const clock = new THREE.Clock();
 //light
 {
     const color = 0xFFFFFF;
-    const intensity = 1;
-    const light = new THREE.DirectionalLight(color, intensity);
-    const light2 = new THREE.DirectionalLight(color, intensity);
+    // const color = 0xFF0000;
+    const intensity = 0.3;
+    const light = new THREE.DirectionalLight(0xEEEE44, intensity);
+    const light2 = new THREE.DirectionalLight(0x2222FF, 0.2);
     light.position.set(-1, 2, 4);
     light2.position.set(3, 2, 4);
     scene.add(light);
