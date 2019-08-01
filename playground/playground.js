@@ -199,7 +199,7 @@ function main() {
         }
         this.surroundCube = function () {
             let i = 0;
-            for (let y = -3 - 0.6; y < -3 + 0.6 + this.step; y += this.step) {
+            for (let y = -3 + 0.6; y > -3 - 0.6 - this.step; y -= this.step) {
                 for (let z = 0 - 0.6; z < 0 + 0.6 + this.step; z += this.step) {
                     for (let x = 0 - 0.6; x < 0 + 0.6 + this.step; x += this.step) {
                         this.particles[i].set(x, y, z);
@@ -376,6 +376,7 @@ function main() {
     ps = new ParticleSet(cubes[0], 0.3, 0, rate / 300);
     ps1 = new ParticleSet(cubes[0], 0.3, 0, rate / 300);
 
+    // let cubes = [];
     //render
     function render(time) {
         time *= 0.001;
