@@ -1,5 +1,6 @@
 const WHITE = 0xFFFFFF;
-const RED = 0xFF1493;
+// const RED = 0xFF1493;
+const RED = 0xFF0000;
 const GREY = 0x52527A;
 
 const canvas = document.querySelector('#c');
@@ -9,7 +10,7 @@ const renderer = new THREE.WebGLRenderer({ canvas });
 const fov = 75;
 const aspect = 2;
 const near = 0.1;
-const far = 8;
+const far = 20;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 
 //position
@@ -19,6 +20,14 @@ camera.position.y = 0.5;
 //scene
 const scene = new THREE.Scene();
 const clock = new THREE.Clock();
+
+const scene2 = new THREE.Scene();
+
+var plane_geometry = new THREE.PlaneGeometry(100, 100, 32);
+var plane_material = new THREE.MeshPhongMaterial({ color: 0xE0FEFE, side: THREE.DoubleSide, reflectivity: 0.01, emissiveIntensity: 0.1 });
+var plane = new THREE.Mesh(plane_geometry, plane_material);
+plane.position.z = -7;
+scene.add(plane);
 
 //light
 {
@@ -32,6 +41,12 @@ const clock = new THREE.Clock();
     scene.add(light);
     scene.add(light2);
 }
+
+var light_amb = new THREE.AmbientLight(0x404055); // soft white light
+scene.add(light_amb);
+
+// var light_amb2 = new THREE.AmbientLight(0x555555);
+// scene.add(light_amb2);
 
 function resizeRendererToDisplaySize(renderer) {
     const canvas = renderer.domElement;

@@ -29,7 +29,7 @@ function sub_render(time, honest_mixer, adversary_mixer) {
         if (camera.fov >= 130) {
             state = "zoom out";
         }
-        forks.forEach((b) => b.set_coins(4.5, -1.5));
+        forks.forEach((b) => b.set_coins(3.3, 0));
     }
     else if (state == "zoom out") { // Camera fully zoomed out
         replace_state();    // Red blocks become canon, replaced blocks vanish

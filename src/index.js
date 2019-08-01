@@ -66,7 +66,7 @@ function main() {
 
     const composer = new EffectComposer(renderer);
     composer.addPass(renderScene);
-    composer.addPass(bloomPass);
+    // composer.addPass(bloomPass);
     // composer.addPass(filmPass);
     // composer.addPass(afterimagePass);
 

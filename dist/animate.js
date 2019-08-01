@@ -48,11 +48,11 @@ var particle_sets = [];
 function mine_canonical(m, time) {
     cubes.forEach((c) => c.y += 1.5);
     let nc = new WhiteBlock(-3, m);
-    // let ps = new ParticleSet(nc, 0.5, time, 0.03);
+    let ps = new ParticleSet(nc, 0.5, time, 0.03);
     // ps.determine_ut();
     // particle_sets = [];
-    // particle_sets.push(ps);
-    // particle_sets.forEach((p) => p.sync())
+    particle_sets.push(ps);
+    particle_sets.forEach((p) => p.sync())
     nc.adjust_cube();
     nc.vanish();
     cubes.push(nc);

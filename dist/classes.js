@@ -156,7 +156,7 @@ function RedBlock(y, mev) {
     this.coins = [];
     // Generate coins based on [this.mev]
     this.spawn = function () {
-        for (let i = 0; i < this.mev; i++) {
+        for (let i = 0; i < this.mev * 7; i++) {
             let nc = new Coin(this.b.position.x, this.b.position.y);
             nc.c.position.z = 1;
             nc.c.rotation.x = 70;
