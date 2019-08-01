@@ -114,7 +114,7 @@ function main() {
     renderer.gammaOutput = true;
 
     function makeInstance(geometry, color, y) {
-        // const material = new THREE.MeshPhongMaterial({ color });
+        const material = new THREE.MeshPhongMaterial({ color });
         // const material = new THREE.MeshPhongMaterial({
         //     color: color, specular: 0x050505, shininess: 100, reflectivity: 100
         // })
@@ -148,6 +148,7 @@ function main() {
                 }
             }
         }
+        // console.log(particles.length)
         return particles;
     }
 
@@ -161,12 +162,21 @@ function main() {
         this.final_target = [-3, 0, 0];
         this.time = time;
 
+        // set ut
         this.determine_ut = function () {
             this.particles.forEach((p, ndx) => {
                 p.ut = this.time + (ndx + 1) * (rate);
             })
         }
 
+        this.dynamic_ut = function (time) {
+            this.particles.forEach((p, ndx) => {
+                p.ut = time + (ndx + 1) * (rate);
+                // console.log(p.ut)
+            })
+        }
+
+        // 
         this.target_timed = function (time) {
             this.particles.forEach((p) => {
                 if (time > p.ut) {
@@ -184,6 +194,22 @@ function main() {
         this.update_particles = function () {
             this.particles.forEach((p) => p.update());
         }
+        this.set_particles = function (x, y, z) {
+            this.particles.forEach((p) => p.set_pos(x, y, z));
+        }
+        this.surroundCube = function () {
+            let i = 0;
+            for (let y = -3 - 0.6; y < -3 + 0.6 + this.step; y += this.step) {
+                for (let z = 0 - 0.6; z < 0 + 0.6 + this.step; z += this.step) {
+                    for (let x = 0 - 0.6; x < 0 + 0.6 + this.step; x += this.step) {
+                        this.particles[i].set(x, y, z);
+                        this.particles[i].set_pos(x, y, z);
+                        i++;
+                    }
+                }
+            }
+        }
+
         this.sync = function () {
             let i = 0;
             let x_cube = this.cube.b.position.x;
@@ -210,6 +236,12 @@ function main() {
             this.x = x;
             this.y = y;
             this.z = z;
+        }
+
+        this.set_pos = function (x, y, z) {
+            this.p.position.x = x;
+            this.p.position.y = y;
+            this.p.position.z = z;
         }
 
         this.update = function () {
@@ -334,7 +366,16 @@ function main() {
 
     let one = true;
     let ps;
+    let ps1;
     let two = true;
+    let rate = 2;
+    let last = 0;
+    // let sets = [];
+    let choice = 0;
+
+    ps = new ParticleSet(cubes[0], 0.3, 0, rate / 300);
+    ps1 = new ParticleSet(cubes[0], 0.3, 0, rate / 300);
+
     //render
     function render(time) {
         time *= 0.001;
@@ -342,16 +383,34 @@ function main() {
         // ps.sync();
 
         // cubes[0].b.position.y += 0.01;
-        if (one) {
-            ps = new ParticleSet(cubes[0], 0.3, time, 0.03);
-            ps.determine_ut();
-            console.log(ps)
-            one = false;
+        if (time - last > rate) {
+            // console.log("mark" + time);
+            last = time;
+            choice++;
+            if (choice % 2 == 0) {
+                ps1.set_particles(0, -3, 0);
+                ps.surroundCube();
+                ps.dynamic_ut(time);
+            } else {
+                ps.set_particles(0, -3, 0);
+                ps1.surroundCube();
+                ps1.dynamic_ut(time);
+            }
         }
 
         uniforms.iTime.value = time;
 
+
+        // sets.forEach((p) => {
+        //     p.target_timed(time);
+        //     p.update_particles();
+        // })
+
         ps.target_timed(time);
+        ps.update_particles();
+
+        ps1.target_timed(time);
+        ps1.update_particles();
 
         // if (time < 0.02) ps.sync();
 
@@ -360,7 +419,7 @@ function main() {
         //     ps.target_timed(time);
         //     // two = false;
         // }
-        ps.update_particles();
+        // ps.update_particles();
 
         mirrorCamera.update(renderer, scene);
 
