@@ -91,7 +91,8 @@ const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
 
 function makeInstance(geometry, color, y) {
     // const material = new THREE.MeshPhongMaterial({ color });
-    const material = new THREE.MeshStandardMaterial({color});
+    const material = new THREE.MeshStandardMaterial({ color });
+    // const material = glow_material;
     // const material = colored_material(color);
     const cube = new THREE.Mesh(geometry, material);
     scene.add(cube);
@@ -159,7 +160,9 @@ function RedBlock(y, mev) {
         for (let i = 0; i < this.mev * 7; i++) {
             let nc = new Coin(this.b.position.x, this.b.position.y);
             nc.c.position.z = 1;
+            nc.g.position.z = 1;
             nc.c.rotation.x = 70;
+            nc.g.rotation.x = 70;
             this.coins.push(nc);
         }
     }
@@ -194,6 +197,8 @@ function RedBlock(y, mev) {
             const rot = time * speed;
             coin.c.rotation.x = rot;
             coin.c.rotation.y = rot;
+            coin.g.rotation.x = rot;
+            coin.g.rotation.y = rot;
         });
     }
 }
@@ -203,12 +208,16 @@ function RedBlock(y, mev) {
 // coin class + methods
 const coin_texture = new THREE.TextureLoader().load('../gcoin.jpg');
 const radius_top = 0.12;
-const radius_bot = 0.12;
+const radius_bot = radius_top;
+const glow_top = 0.17;
+const glow_bot = glow_top;
 const height = 0.01;
+const glow_height = 0.04;
 const r_segments = 100;
 const coin_geometry = new THREE.CylinderGeometry(
     radius_top, radius_bot, height, r_segments);
-
+const glow_geometry = new THREE.CylinderGeometry(
+    glow_top, glow_bot, glow_height, r_segments);
 function makeCoin(x, y) {
     const material = new THREE.MeshStandardMaterial({
         color: 0xFFD700,
@@ -221,10 +230,19 @@ function makeCoin(x, y) {
     return coin;
 }
 
+function makeGlow(x, y) {
+    const glow = new THREE.Mesh(glow_geometry, glow_material);
+    glow.position.x = x;
+    glow.position.y = y;
+    scene.add(glow);
+    return glow;
+}
+
 function Coin(x, y) {
     this.c = makeCoin(x, y);
     this.x = x;
     this.y = y;
+    this.g = makeGlow(x, y);
     // Go in a random direction to the right
     this.drift = function () {
         this.x += Math.random() * 3;
@@ -241,20 +259,36 @@ function Coin(x, y) {
 
         this.c.position.x += Math.min(speed, dist_x) * dir_x;
         this.c.position.y += Math.min(speed, dist_y) * dir_y;
+        this.g.position.x += Math.min(speed, dist_x) * dir_x;
+        this.g.position.y += Math.min(speed, dist_y) * dir_y;
     }
 
     // Visibly disappear
     this.disappear = function () {
         this.c.material.transparent = true;
         this.c.material.opacity = 0;
+        this.g.material = this.c.material;
+        // this.g.material.transparent = true;
+        // this.g.material.opacity = 0;
     }
 }
 
 // ============= particle classes =============
 function makeParticle(x, y, z, color) {
-    const geometry = new THREE.SphereGeometry(0.03, 8, 8);
+    const geometry = new THREE.SphereGeometry(0.05, 8, 8);
     const material = new THREE.MeshPhongMaterial({ color });
-    const particle = new THREE.Mesh(geometry, material);
+    const particle = new THREE.Mesh(geometry, glow_material);
+    particle.position.x = x;
+    particle.position.y = y;
+    particle.position.z = z;
+    scene.add(particle);
+    return particle;
+}
+
+function makePGlow(x, y, z, color) {
+    const geometry = new THREE.SphereGeometry(0.07, 8, 8);
+    const material = new THREE.MeshPhongMaterial({ color });
+    const particle = new THREE.Mesh(geometry, glow_material);
     particle.position.x = x;
     particle.position.y = y;
     particle.position.z = z;
@@ -290,6 +324,12 @@ function ParticleSet(cube, step, time, rate) {
             p.ut = this.time + (ndx + 1) * (rate);
         })
     }
+    this.dynamic_ut = function (time) {
+        this.particles.forEach((p, ndx) => {
+            p.ut = time + (ndx + 1) * (rate);
+            // console.log(p.ut)
+        })
+    }
 
     this.target_timed = function (time) {
         this.particles.forEach((p) => {
@@ -307,6 +347,21 @@ function ParticleSet(cube, step, time, rate) {
     }
     this.update_particles = function () {
         this.particles.forEach((p) => p.update());
+    }
+    this.set_particles = function (x, y, z) {
+        this.particles.forEach((p) => p.set_pos(x, y, z));
+    }
+    this.surroundCube = function () {
+        let i = 0;
+        for (let y = -3 + 0.6; y > -3 - 0.6 - this.step; y -= this.step) {
+            for (let z = 0 - 0.6; z < 0 + 0.6 + this.step; z += this.step) {
+                for (let x = 0 - 0.6; x < 0 + 0.6 + this.step; x += this.step) {
+                    this.particles[i].set(x, y, z);
+                    this.particles[i].set_pos(x, y, z);
+                    i++;
+                }
+            }
+        }
     }
     this.sync = function () {
         let i = 0;
@@ -329,11 +384,19 @@ function Particle(x, y, z, c) {
     this.x = x;
     this.y = y;
     this.z = z;
+    // this.g = makePGlow(x, y, z, c);
     this.ut = 0;
+
     this.set = function (x, y, z) {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    this.set_pos = function (x, y, z) {
+        this.p.position.x = x;
+        this.p.position.y = y;
+        this.p.position.z = z;
     }
 
     this.update = function () {
@@ -350,11 +413,16 @@ function Particle(x, y, z, c) {
         this.p.position.y += Math.min(speed, dist_y) * dir_y;
         this.p.position.z += Math.min(speed, dist_z) * dir_z;
 
+        // this.g.position.x += Math.min(speed, dist_x) * dir_x;
+        // this.g.position.y += Math.min(speed, dist_y) * dir_y;
+        // this.g.position.z += Math.min(speed, dist_z) * dir_z;
+
     }
 
     this.disappear = function () {
         this.p.material.transparent = true;
         this.p.material.opacity = 0;
+        // this.g.material = this.p.material;
     }
 }
 

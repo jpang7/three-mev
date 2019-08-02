@@ -26,9 +26,13 @@ function main() {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
+                // child.material.map = glow_material;
+                // child.material.needsUpdate = true;
             }
         });
         scene.add(object);
+    }, undefined, function (e) {
+        console.error(e);
     })
 
     var adversary_mixer;
@@ -51,6 +55,14 @@ function main() {
 
     // ============= post-processing =============
     const renderScene = new RenderPass(scene, camera);
+    // const renderScene2 = new RenderPass(scene2, camera);
+    renderScene.renderToScreen = true;
+    renderScene.clear = false;
+    renderScene.clearDepth = true;
+    // renderScene2.renderToScreen = true;
+    // renderScene2.clear = false;
+    // renderScene2.clearDepth = true;
+
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
     bloomPass.threshold = 0;
     bloomPass.strength = 1;
@@ -66,9 +78,14 @@ function main() {
 
     const composer = new EffectComposer(renderer);
     composer.addPass(renderScene);
+    // composer.addPass(renderScene2);
     // composer.addPass(bloomPass);
     // composer.addPass(filmPass);
     // composer.addPass(afterimagePass);
+
+    // const composer2 = new EffectComposer(renderer2);
+    // composer2.addPass(renderScene2);
+    // composer2.addPass(afterimagePass);
 
     // ============= render =============    
     let then = 0;
@@ -87,6 +104,9 @@ function main() {
         }
 
         composer.render(deltaTime);
+        // composer.clear = false;
+        // composer2.render(deltaTime);
+        // composer2.clear = true;
 
         requestAnimationFrame(render); // this is a recursive call
     }

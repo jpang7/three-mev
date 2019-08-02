@@ -6,6 +6,10 @@ cubes.forEach((cube) => {
     cube.adjust_cube();
 });
 
+let ps = new ParticleSet(cubes[0], 0.3, 0, block_rate / 400);
+let ps1 = new ParticleSet(cubes[0], 0.3, 0, block_rate / 400);
+let choice = 0;
+
 // assigns position in block based on index. max index = 27
 function parametrize(t) {
     let x = t % 3;
@@ -48,6 +52,7 @@ var particle_sets = [];
 function mine_canonical(m, time) {
     cubes.forEach((c) => c.y += 1.5);
     let nc = new WhiteBlock(-3, m);
+    update_particles(time);
     // let ps = new ParticleSet(nc, 0.5, time, 0.03);
     // ps.determine_ut();
     // particle_sets = [];
@@ -59,4 +64,22 @@ function mine_canonical(m, time) {
     playBuildAnimation(time);
 
     return nc;
+}
+
+function change_light(time) {
+    let choose = Math.sin(time) / 2;
+    light3.color.addScalar(choose);
+}
+
+function update_particles(time) {
+    choice++;
+    if (choice % 2 == 0) {
+        ps1.set_particles(0, -3, 0);
+        ps.surroundCube();
+        ps.dynamic_ut(time);
+    } else {
+        ps.set_particles(0, -3, 0);
+        ps1.surroundCube();
+        ps1.dynamic_ut(time);
+    }
 }

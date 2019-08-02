@@ -100,4 +100,12 @@ function sub_render(time, honest_mixer, adversary_mixer) {
         cube.spin_coins(time);
         cube.b.rotation.y = rot;
     });
+
+    ps.target_timed(time);
+    ps.update_particles();
+
+    ps1.target_timed(time);
+    ps1.update_particles();
+
+    // change_light(time);
 }
