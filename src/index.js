@@ -10,6 +10,8 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
 import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { AdditiveBlending } from 'three';
 
 function main() {
     // ============= loader =============
@@ -55,10 +57,10 @@ function main() {
 
     // ============= post-processing =============
     const renderScene = new RenderPass(scene, camera);
-    // const renderScene2 = new RenderPass(scene2, camera);
-    renderScene.renderToScreen = true;
-    renderScene.clear = false;
-    renderScene.clearDepth = true;
+    const renderScene2 = new RenderPass(scene2, camera);
+    // renderScene.renderToScreen = true;
+    // renderScene.clear = false;
+    // renderScene.clearDepth = true;
     // renderScene2.renderToScreen = true;
     // renderScene2.clear = false;
     // renderScene2.clearDepth = true;
@@ -74,14 +76,24 @@ function main() {
     filmPass.renderToScreen = true;
 
     const afterimagePass = new AfterimagePass();
-    afterimagePass.uniforms["damp"].value = 0.3;
+    afterimagePass.uniforms["damp"].value = damp;
+
+    const blendPass = new ShaderPass(AdditiveBlending);
 
     const composer = new EffectComposer(renderer);
     composer.addPass(renderScene);
     // composer.addPass(renderScene2);
     // composer.addPass(bloomPass);
     // composer.addPass(filmPass);
-    // composer.addPass(afterimagePass);
+    composer.addPass(afterimagePass);
+
+    afterim.composer = new EffectComposer(renderer);
+    afterim.composer.addPass(renderScene2);
+    afterim.composer.addPass(afterimagePass);
+
+    normal.composer = new EffectComposer(renderer);
+    normal.composer.addPass(renderScene);
+
 
     // const composer2 = new EffectComposer(renderer2);
     // composer2.addPass(renderScene2);
@@ -103,7 +115,9 @@ function main() {
             composer.setSize(canvas.width, canvas.height);
         }
 
-        composer.render(deltaTime);
+
+        afterim.composer.render(deltaTime);
+        normal.composer.render(deltaTime);
         // composer.clear = false;
         // composer2.render(deltaTime);
         // composer2.clear = true;

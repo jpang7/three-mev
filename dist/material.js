@@ -73,6 +73,14 @@ void main() {
 }
 `
 
+const whiteFrag = `
+varying float intensity;
+void main() {
+	vec3 glow = vec3(1., 1., 1.) * intensity;
+    gl_FragColor = vec4( glow, 1.0 );
+}
+`
+
 const mat_loader = new THREE.TextureLoader();
 const texture = mat_loader.load('https://threejsfundamentals.org/threejs/resources/images/bayer.png');
 texture.minFilter = THREE.NearestFilter;
@@ -114,6 +122,20 @@ const glow_material = new THREE.ShaderMaterial({
     },
     vertexShader: vertexShaderSun,
     fragmentShader: fragmentShaderSun,
+    side: THREE.FrontSide,
+    blending: THREE.AdditiveBlending,
+    transparent: true
+});
+
+const glow_material_white = new THREE.ShaderMaterial({
+    uniforms: {
+        viewVector: {
+            type: "v3",
+            value: camera.position
+        }
+    },
+    vertexShader: vertexShaderSun,
+    fragmentShader: whiteFrag,
     side: THREE.FrontSide,
     blending: THREE.AdditiveBlending,
     transparent: true

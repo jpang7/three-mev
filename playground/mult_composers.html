@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang='en'>
+	<head>
+		<title>Selective Postprocessing FX</title>
+		<meta charset='utf-8'>
+		<meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
+		<style>
+			body {
+				font-family: sans-serif;
+				margin: 0px;
+				background-color: #000000;
+				overflow: hidden;
+			}
+
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+
+			}
+
+		</style>
+	</head>
+	<body>
+
+		<div id='info'>Selective Postprocessing FX Simple Example (Three.js v79)</div>
+
+
+		<!-- THREE -->
+		<script src='lib/three/three.min.js'></script>
+		<script src='lib/three/OrbitControls.js'></script>
+		<script src="lib/three/shaders/CopyShader.js"></script>
+		<script src="lib/three/shaders/RGBShiftShader.js"></script>
+		<script src="lib/three/postprocessing/EffectComposer.js"></script>
+		<script src="lib/three/postprocessing/RenderPass.js"></script>
+		<script src="lib/three/postprocessing/ShaderPass.js"></script>
+
+		<script src="AdditiveBlendShader.js"></script>
+
+		<script>
+
+			/* global THREE */
+
+			/*
+
+				Selectively apply Post-Processing (PPO) to 1 object.
+
+				We render 2 scenes with the same camera, then Additively Blend the 2 scenes.
+
+				1st scene (ppoRGB.scene) contains a testcard plane. ppoRGB applys RGBShift FX.
+				2nd scene (ppoFinal.scene) contains a wireframe cube.  ppoFinal has no effects and additively blends the results of 1st scene.
+
+				Using THREE.JS v79
+
+				@author @felixturner | http://airtight.cc/
+
+			*/
+
+			var camera, renderer;
+			var boxMesh;
+			var controls;
+
+			var ppoRGB = {};  //testcard + rgbshift
+			var ppoFinal = {};	//wireframe + blend
+
+			init();
+			animate();
+
+			function init() {
+
+				//INIT RENDERER + CAMERA
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				document.body.appendChild( renderer.domElement );
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.set(0,200,500);
+
+				//controls
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+
+				//INIT RGB SCENE
+				ppoRGB.scene = new THREE.Scene();
+
+				//add testcard plane
+				var tl = new THREE.TextureLoader();
+				var map = tl.load( 'testcard_1024.jpg');
+				var cardMaterial = new THREE.MeshBasicMaterial( { map: map , side: THREE.DoubleSide} );
+				var planeGeom  = new THREE.PlaneGeometry( 500, 500 ,5,5);
+				var cardMesh = new THREE.Mesh( planeGeom, cardMaterial );
+				ppoRGB.scene.add( cardMesh );
+
+				//INIT FINAL SCENE
+				ppoFinal.scene = new THREE.Scene();
+
+				//add wireframe box
+				var boxMaterial = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, wireframe: true , wireframeLinewidth: 3} );
+				var boxGeom  = new THREE.BoxGeometry( 300, 300, 300);
+				boxMesh = new THREE.Mesh( boxGeom, boxMaterial );
+				ppoFinal.scene.add( boxMesh );
+
+
+				//INIT RGB PPO
+				//init ppoRGB (render testcard + RGB shift)
+				ppoRGB.renderPass = new THREE.RenderPass( ppoRGB.scene, camera );
+				ppoRGB.rgbPass = new THREE.ShaderPass( THREE.RGBShiftShader );
+				ppoRGB.rgbPass.uniforms.amount.value = 0.04;
+
+				//we need to add an additional copy pass to avoid flickering (??)
+				ppoRGB.copyPass = new THREE.ShaderPass( THREE.CopyShader );
+
+				ppoRGB.composer = new THREE.EffectComposer( renderer);
+				ppoRGB.composer.addPass( ppoRGB.renderPass );
+				ppoRGB.composer.addPass( ppoRGB.rgbPass );
+				ppoRGB.composer.addPass( ppoRGB.copyPass );
+
+				//INIT FINAL PPO
+				//init ppoFinal (render box + additive blend with ppoRGB)
+				ppoFinal.renderPass = new THREE.RenderPass( ppoFinal.scene, camera );
+				ppoFinal.blendPass = new THREE.ShaderPass( THREE.AdditiveBlendShader );
+
+				//pass in resulting renderTarget texture from ppoRGB
+				ppoFinal.blendPass.uniforms.tAdd.value = ppoRGB.composer.renderTarget2.texture;
+
+				ppoFinal.composer = new THREE.EffectComposer( renderer);
+				ppoFinal.composer.addPass( ppoFinal.renderPass );
+				ppoFinal.composer.addPass( ppoFinal.blendPass );
+				//final blend pass is drawn to screen
+				ppoFinal.blendPass.renderToScreen = true;
+
+				//resize
+				window.addEventListener( 'resize', onWindowResize, false );
+				onWindowResize();
+
+			}
+
+			function onWindowResize() {
+
+				var w = window.innerWidth;
+				var h = window.innerHeight;
+
+				camera.aspect =  w / h;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( w,h );
+				renderer.setPixelRatio( window.devicePixelRatio );
+
+				ppoFinal.composer.setSize(w ,h );
+				ppoRGB.composer.setSize(w ,h );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				boxMesh.rotation.x += 0.01;
+				boxMesh.rotation.y += 0.01;
+
+				controls.update();
+
+				ppoRGB.composer.render();
+				ppoFinal.composer.render();
+
+			}
+
+		</script>
+
+	</body>
+</html>

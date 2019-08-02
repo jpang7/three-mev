@@ -23,10 +23,16 @@ camera.position.z = 7;
 camera.position.y = 0.5;
 
 //scene
-const scene = new THREE.Scene();
+var normal = {};
+var afterim = {};
+
+normal.scene = new THREE.Scene();
+afterim.scene = new THREE.Scene();
+
+const scene = normal.scene;
 const clock = new THREE.Clock();
 
-const scene2 = new THREE.Scene();
+const scene2 = afterim.scene;
 
 var plane_geometry = new THREE.PlaneGeometry(100, 100, 32);
 var plane_material = new THREE.MeshPhongMaterial({ color: 0xE0FEFE, side: THREE.DoubleSide, reflectivity: 0.01, emissiveIntensity: 0.1 });
@@ -84,3 +90,7 @@ var pass_y = 0;
 var mev_blocks = [];
 
 var state = "stable";
+
+//post processing
+// var damp = 0.99;
+var damp = 0.97;

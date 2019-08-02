@@ -277,7 +277,7 @@ function Coin(x, y) {
 function makeParticle(x, y, z, color) {
     const geometry = new THREE.SphereGeometry(0.05, 8, 8);
     const material = new THREE.MeshPhongMaterial({ color });
-    const particle = new THREE.Mesh(geometry, glow_material);
+    const particle = new THREE.Mesh(geometry, glow_material_white);
     particle.position.x = x;
     particle.position.y = y;
     particle.position.z = z;
