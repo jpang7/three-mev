@@ -15,12 +15,12 @@ const renderer = new THREE.WebGLRenderer({ canvas });
 const fov = 75;
 const aspect = 2;
 const near = 0.1;
-const far = 20;
+const far = 50;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 
 //position
-camera.position.z = 7;
-camera.position.y = 0.5;
+camera.position.z = 15;
+camera.position.y = 3;
 
 //scene
 var normal = {};
@@ -34,20 +34,22 @@ const clock = new THREE.Clock();
 
 const scene2 = afterim.scene;
 
+var plane_color = 0xE0FEFE;
 var plane_geometry = new THREE.PlaneGeometry(100, 100, 32);
-var plane_material = new THREE.MeshPhongMaterial({ color: 0xE0FEFE, side: THREE.DoubleSide, reflectivity: 0.01, emissiveIntensity: 0.1 });
-var plane = new THREE.Mesh(plane_geometry, plane_material);
+// var plane_material = new THREE.MeshPhongMaterial({ color: 0x000000, side: THREE.DoubleSide, reflectivity: 0.01, emissiveIntensity: 0.1 });
+var plane = new THREE.Mesh(plane_geometry, test_mat);
 plane.position.z = -7;
 scene.add(plane);
 
 //light
 
 // const color = 0xFFFFFF;
-const color = 0xE0FEFE;
+// const color = 0xE0FEFE;
+const color = 0x000000;
 // const color = 0xFF0000;
-const intensity = 0.3;
+const intensity = 0.5;
 const light = new THREE.DirectionalLight(0xEEEE44, intensity);
-const light2 = new THREE.DirectionalLight(0x2222FF, 0.2);
+const light2 = new THREE.DirectionalLight(0x2222FF, 0.5);
 const light3 = new THREE.DirectionalLight(color, 0.3);
 light.position.set(-1, 2, 4);
 light2.position.set(3, 2, 4);
@@ -93,4 +95,5 @@ var state = "stable";
 
 //post processing
 // var damp = 0.99;
-var damp = 0.97;
+var damp = 0.3;
+var strength = 0.7;

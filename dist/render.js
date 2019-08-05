@@ -108,4 +108,5 @@ function sub_render(time, honest_mixer, adversary_mixer) {
     ps1.update_particles();
 
     // change_light(time);
+    test_uni["time"].value = time;
 }

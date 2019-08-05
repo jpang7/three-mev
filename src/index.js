@@ -67,7 +67,7 @@ function main() {
 
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
     bloomPass.threshold = 0;
-    bloomPass.strength = 1;
+    bloomPass.strength = strength;
     bloomPass.radius = 0;
 
     const filmPass = new FilmPass(
@@ -85,14 +85,46 @@ function main() {
     // composer.addPass(renderScene2);
     // composer.addPass(bloomPass);
     // composer.addPass(filmPass);
-    composer.addPass(afterimagePass);
+    // composer.addPass(afterimagePass);
 
     afterim.composer = new EffectComposer(renderer);
     afterim.composer.addPass(renderScene2);
     afterim.composer.addPass(afterimagePass);
 
+    const colorShader = {
+        uniforms: {
+            tDiffuse: { value: null },
+            color: { value: new THREE.Color(0x88CCFF) },
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1);
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 color;
+          uniform sampler2D tDiffuse;
+          varying vec2 vUv;
+          void main() {
+            vec4 previousPassColor = texture2D(tDiffuse, vUv);
+            gl_FragColor = vec4(
+                previousPassColor.rgb * color,
+                previousPassColor.a);
+          }
+        `,
+    };
+
+    const colorPass = new ShaderPass(colorShader);
+    colorPass.renderToScreen = true;
+
     normal.composer = new EffectComposer(renderer);
     normal.composer.addPass(renderScene);
+    normal.composer.addPass(bloomPass);
+    normal.composer.addPass(colorPass);
+    // normal.composer.addPass(afterimagePass);
+    // normal.composer.addPass(filmPass);
 
 
     // const composer2 = new EffectComposer(renderer2);
@@ -112,11 +144,11 @@ function main() {
             const canvas = renderer.domElement; // updates aspect based on window size
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();
-            composer.setSize(canvas.width, canvas.height);
+            normal.composer.setSize(canvas.width, canvas.height);
         }
 
 
-        afterim.composer.render(deltaTime);
+        // afterim.composer.render(deltaTime);
         normal.composer.render(deltaTime);
         // composer.clear = false;
         // composer2.render(deltaTime);
