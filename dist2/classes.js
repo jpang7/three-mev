@@ -90,8 +90,8 @@ const boxDepth = 1;
 const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
 
 function makeInstance(geometry, color, y) {
-    const material = new THREE.MeshPhongMaterial({ color });
-    // const material = new THREE.MeshStandardMaterial({ color });
+    // const material = new THREE.MeshPhongMaterial({ color });
+    const material = new THREE.MeshStandardMaterial({ color });
     // const material = glow_material;
     // const material = colored_material(color);
     const cube = new THREE.Mesh(geometry, material);
@@ -277,7 +277,7 @@ function Coin(x, y) {
 function makeParticle(x, y, z, color) {
     const geometry = new THREE.SphereGeometry(0.05, 8, 8);
     const material = new THREE.MeshPhongMaterial({ color });
-    const particle = new THREE.Mesh(geometry, glow_material);
+    const particle = new THREE.Mesh(geometry, glow_material_white);
     particle.position.x = x;
     particle.position.y = y;
     particle.position.z = z;
@@ -412,97 +412,20 @@ function Particle(x, y, z, c) {
         this.p.position.x += Math.min(speed, dist_x) * dir_x;
         this.p.position.y += Math.min(speed, dist_y) * dir_y;
         this.p.position.z += Math.min(speed, dist_z) * dir_z;
+
+        // this.g.position.x += Math.min(speed, dist_x) * dir_x;
+        // this.g.position.y += Math.min(speed, dist_y) * dir_y;
+        // this.g.position.z += Math.min(speed, dist_z) * dir_z;
+
     }
 
     this.disappear = function () {
         this.p.material.transparent = true;
         this.p.material.opacity = 0;
+        // this.g.material = this.p.material;
     }
 }
 
 function WhiteParticle(x, y, z) {
     Particle.call(this, x, y, z, WHITE);
-}
-
-function makeBolt(x, y, z, r, mat) {
-    const radiusTop = r;
-    const radiusBottom = radiusTop;
-    const height = 0.1;
-    const geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 32);
-    const cylinder = new THREE.Mesh(geometry, mat);
-    scene.add(cylinder);
-    cylinder.rotation.z = Math.PI / 2;
-    cylinder.position.x = x;
-    cylinder.position.y = y;
-    cylinder.position.z = z;
-    return cylinder;
-}
-
-function makeTrail() {
-    var trail = [];
-    const radius = .2;
-    const geometry = new THREE.SphereGeometry(radius, 32, 32);
-    for (let i = 0; i < 100; i++) {
-        let sphere = new THREE.Mesh(geometry, glow_material);
-        trail.push(sphere);
-        sphere.position.x = -3;
-        sphere.position.z = -1;
-        scene.add(sphere);
-    }
-    return trail;
-}
-
-function Bolt(x, y, z) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-    this.b = makeBolt(x, y, z, 0.05, glow_material_custom);
-    this.trail = makeTrail();
-    this.count = 0;
-    this.update = function () {
-        const speed = 0.5;
-        let dist_x = Math.abs(this.b.position.x - this.x);
-        let dist_y = Math.abs(this.b.position.y - this.y);
-        let dist_z = Math.abs(this.b.position.z - this.z);
-
-        let dir_x = (this.b.position.x < this.x) ? 1 : -1;
-        let dir_y = (this.b.position.y < this.y) ? 1 : -1;
-        let dir_z = (this.b.position.z < this.z) ? 1 : -1;
-
-        this.b.position.x += Math.min(speed, dist_x) * dir_x;
-        this.b.position.y += Math.min(speed, dist_y) * dir_y;
-        this.b.position.z += Math.min(speed, dist_z) * dir_z;
-    }
-    this.trail_update = function () {
-        this.trail[this.count].position.x = this.b.position.x;
-        this.trail[this.count].position.y = this.b.position.y;
-        let c = [1, 1, Math.random()]
-        this.trail[this.count].material = color_glow(c);
-        this.count++;
-    }
-    this.go = function () {
-        this.x = 10 * block_rate;
-        this.y = Math.random() * 15 * ((Math.random() <= 0.5) ? 1 : -1);
-    }
-    this.reset = function () {
-        this.x = -6;
-        this.b.position.x = -6;
-        this.count = 0;
-        this.trail.forEach((t) => t.position.x = -6);
-    }
-    this.disappear = function () {
-        this.b.material = white_phong;
-        this.b.material.transparent = true;
-        this.b.material.opacity = 0;
-
-        this.trail.forEach((t) => {
-            t.material = this.b.material;
-        });
-    }
-    this.appear = function () {
-        this.b.material = color_glow([1., 0.84, 0]);
-        this.trail.forEach((t) => {
-            t.material = this.b.material;
-        });
-    }
 }

@@ -493,6 +493,7 @@ function main() {
 
         pulse_uniforms.u_time.value = time;
 
+        // cubes[0].b.position.x += 0.01;
         // cubes[0].b.position.y += 0.01;
         if (time - last > rate) {
             // console.log("mark" + time);

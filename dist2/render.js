@@ -14,22 +14,13 @@ function sub_render(time, honest_mixer, adversary_mixer) {
     if (state == "stable") { // Only stable (not shaking), white blocks
         stable_state(time);
         mixer_times(5, 0);
-        bolts.forEach((b) => {
-            b.trail_update();
-        })
     } else if (state == "mev") { // White blocks begin to shake
         mev_state(time);
-        bolts.forEach((b) => {
-            b.trail_update();
-        })
     }
     else if (state == "fork") { // Red fork blocks appear
         fork_state(time);
         stable_state(time);
         mixer_times(5, 10);
-        bolts.forEach((b) => {
-            b.trail_update();
-        })
     }
     else if (state == "win") { // Red fork surpassed the main chain. zoom out
         mixer_times(0, 0);
@@ -39,7 +30,6 @@ function sub_render(time, honest_mixer, adversary_mixer) {
             state = "zoom out";
         }
         forks.forEach((b) => b.set_coins(3.3, 0));
-        bolts.forEach((b) => b.disappear());
     }
     else if (state == "zoom out") { // Camera fully zoomed out
         replace_state();    // Red blocks become canon, replaced blocks vanish
@@ -58,7 +48,6 @@ function sub_render(time, honest_mixer, adversary_mixer) {
             cubes = cubes.concat(forks);
             cubes.forEach((cube) => cube.y += 1.5);
             forks = [];
-            bolts.forEach((b) => b.appear());
         }
     }
 
@@ -118,8 +107,6 @@ function sub_render(time, honest_mixer, adversary_mixer) {
     ps1.target_timed(time);
     ps1.update_particles();
 
-    bolts.forEach((b) => {
-        b.go();
-        b.update();
-    })
+    // change_light(time);
+    test_uni["time"].value = time;
 }

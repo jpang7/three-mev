@@ -2,11 +2,6 @@ for (let i = 0; i < 6; i++) {
     cubes.push(new WhiteBlock(-3 + i * 1.5, 0));
 }
 
-var bolts = [];
-for (let i = 0; i < 20; i++) {
-    bolts.push(new Bolt(-3, -4 + i * 1.5, -1));
-}
-
 cubes.forEach((cube) => {
     cube.adjust_cube();
 });
@@ -62,7 +57,7 @@ function mine_canonical(m, time) {
     nc.vanish();
     cubes.push(nc);
     playBuildAnimation(time);
-    bolts.forEach((b) => b.reset());
+
     return nc;
 }
 
