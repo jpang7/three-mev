@@ -65,7 +65,7 @@ for (let i = 0; i < 27; i++) {
 }
 
 for (let i = 0; i < 27; i++) {
-    let tx=  new BadTx();
+    let tx = new BadTx();
     bad_tx_lst.push(tx);
     recycle_proton_list.push(new BadTxEmitter(tx));
 }
@@ -175,9 +175,9 @@ function RedBlock(y, mev) {
     }
 
     this.helicoid = function () {
-        this.coins.forEach((c,ndx) => {
-            let ndx_u = ndx*0.1
-            c.set(Math.sin(ndx_u) + 3 ,Math.cos(ndx_u) + this.b.position.y,ndx_u);
+        this.coins.forEach((c, ndx) => {
+            let ndx_u = ndx * 0.1
+            c.set(Math.sin(ndx_u) + 3, Math.cos(ndx_u) + this.b.position.y, ndx_u);
         })
         this.mev = 0;
     }
@@ -190,14 +190,14 @@ function RedBlock(y, mev) {
         })
     }
 
-    this.dynamic_ut = function(time) {
+    this.dynamic_ut = function (time) {
         this.coins.forEach((c, ndx) => {
             c.ut = time + (ndx + 1);
         })
     }
 
-    this.target_timed = function(time) {
-        this.coins.forEach((c,ndx) => {
+    this.target_timed = function (time) {
+        this.coins.forEach((c, ndx) => {
             if (time > c.ut) {
                 // c.set(
 
@@ -272,7 +272,7 @@ function Coin(x, y) {
     // Go in a random direction to the right
     this.drift = function () {
         this.x += Math.random() * 2 * ((Math.random() < 0.5) ? 1 : -3);
-        this.y += Math.random() * 1.4*  ((Math.random() < 0.5) ? 1 : -1);
+        this.y += Math.random() * 1.4 * ((Math.random() < 0.5) ? 1 : -1);
     }
     // Translate to ([this.x], [this.y])
     this.update = function (time) {
@@ -294,7 +294,7 @@ function Coin(x, y) {
         this.g.position.z += Math.min(speed, dist_z) * dir_z;
     }
 
-    this.set = function (x,y,z) {
+    this.set = function (x, y, z) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -345,7 +345,7 @@ function surroundCube(x_cube, y_cube, z_cube, step_size) {
     for (let z = z_cube - 0.6; z < z_cube + 0.6 + step_size; z += step_size) {
         for (let y = y_cube - 0.6; y < y_cube + 0.6 + step_size; y += step_size) {
             for (let x = x_cube - 0.6; x < x_cube + 0.6 + step_size; x += step_size) {
-                let wp  = new WhiteParticle(x,y,z);
+                let wp = new WhiteParticle(x, y, z);
                 particles.push(wp);
                 // recycle_proton_list.push(new WhiteParticleEmitter(wp));
             }
@@ -486,7 +486,7 @@ function makeBolt(x, y, z, r, mat) {
 function makeTrail() {
     var trail = [];
     const radius = .1;
-    const geometry = new THREE.SphereGeometry(radius, 4,4);
+    const geometry = new THREE.SphereGeometry(radius, 4, 4);
     // const geometry = new THREE.BoxGeometry(radius,radius,radius)
     for (let i = 0; i < 300; i++) {
         let sphere = new THREE.Mesh(geometry, glow_material);
@@ -506,7 +506,7 @@ function Bolt(x, y, z) {
     this.trail = makeTrail();
     this.count = 0;
     this.update = function () {
-        const speed = 0.5;
+        const speed = 0.3;
         let dist_x = Math.abs(this.b.position.x - this.x);
         let dist_y = Math.abs(this.b.position.y - this.y);
         let dist_z = Math.abs(this.b.position.z - this.z);
@@ -527,7 +527,7 @@ function Bolt(x, y, z) {
         this.count++;
     }
     this.go = function () {
-        this.x = 10 * block_rate;
+        this.x = 5;
         this.y = Math.random() * 15 * ((Math.random() <= 0.5) ? 1 : -1);
     }
     this.reset = function () {
@@ -553,11 +553,11 @@ function Bolt(x, y, z) {
     }
 }
 
-function makeDrone(x,y,z) {
+function makeDrone(x, y, z) {
     var side = 0.5;
-    var geometry = new THREE.BoxGeometry(side,side,side);
-    var material = new THREE.MeshPhongMaterial({color: 0xFFFFFF});
-    var mesh = new THREE.Mesh(geometry,material);
+    var geometry = new THREE.BoxGeometry(side, side, side);
+    var material = new THREE.MeshPhongMaterial({ color: 0xFFFFFF });
+    var mesh = new THREE.Mesh(geometry, material);
     mesh.position.x = x;
     mesh.position.y = y;
     mesh.position.z = z;
@@ -565,13 +565,13 @@ function makeDrone(x,y,z) {
     return mesh;
 }
 
-function Drone(x,y,z) {
-    this.x =x;
+function Drone(x, y, z) {
+    this.x = x;
     this.y = y;
     this.z = z;
-    this.d = makeDrone(x,y,z);
+    this.d = makeDrone(x, y, z);
 
-    this.set = function (x,y,z) {
+    this.set = function (x, y, z) {
         this.x = x;
         this.y = y;
         this.z = z;
