@@ -55,7 +55,7 @@ function InitTx() {
 }
 
 function BadTx() {
-    Tx.call(this, 3, 0, 0, RED);
+    Tx.call(this, 3.5, 0, 0, RED);
 }
 
 for (let i = 0; i < 27; i++) {

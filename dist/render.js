@@ -38,7 +38,7 @@ function sub_render(time, honest_mixer, adversary_mixer) {
         if (camera.fov >= 130) {
             state = "zoom out";
         }
-        forks.forEach((b) => b.set_coins(4.3, 0));
+        forks.forEach((b) => b.set_coins(3.5, 0));
         // forks.forEach((b) => b.emit_color(null))
         bolts.forEach((b) => b.disappear());
     }
