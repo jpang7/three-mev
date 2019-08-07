@@ -7,6 +7,11 @@ for (let i = 0; i < 20; i++) {
     bolts.push(new Bolt(-3, -4 + i * 1.5, -1));
 }
 
+var drones = [];
+for (let i = 0; i < 50; i++){
+    drones.push(new Drone(-3,0,0));
+}
+
 cubes.forEach((cube) => {
     cube.adjust_cube();
 });
@@ -78,3 +83,4 @@ function update_particles(time) {
         ps1.dynamic_ut(time);
     }
 }
+

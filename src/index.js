@@ -30,7 +30,7 @@ function main() {
                 child.receiveShadow = true;
             }
         });
-        scene.add(object);
+        // scene.add(object);
     }, undefined, function (e) {
         console.error(e);
     })

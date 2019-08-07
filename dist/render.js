@@ -44,8 +44,8 @@ function sub_render(time, honest_mixer, adversary_mixer) {
     else if (state == "zoom out") { // Camera fully zoomed out
         replace_state();    // Red blocks become canon, replaced blocks vanish
     }
-    else if (state == "replay") { // Prepare the next config and loop back to stable
-        forks.forEach((c) => c.vanish_coins());
+    else if (state == "replay") { // Preparvanish_coinse the next config and loop back to stable
+        forks.forEach((c) => c.delete_coins());
         camera.fov -= 0.5;
         camera.updateProjectionMatrix();
         if (camera.fov <= 75) {
@@ -54,7 +54,7 @@ function sub_render(time, honest_mixer, adversary_mixer) {
             mev_start += time;
             state = "stable"
             let sub_cubes = cubes.slice(cubes.length - forks.length + 1);
-            sub_cubes.forEach((c) => c.vanish());
+            sub_cubes.forEach((c) => c.delete());
             cubes = cubes.concat(forks);
             cubes.forEach((cube) => cube.y += 1.5);
             forks = [];
@@ -122,4 +122,21 @@ function sub_render(time, honest_mixer, adversary_mixer) {
         b.go();
         b.update();
     })
+
+    recycle_proton.update();
+    recycle_proton_list.forEach((t) => {
+        t.update();
+    })
+
+    drones.forEach((d,ndx) => {
+        d.set(
+            -4.5 + Math.cos(time + ndx * 100),
+            Math.cos(ndx + time) + Math.cos(time * 4),
+            Math.sin(ndx + time))
+        d.update();
+    })
+
+    // tx_lst.forEach((t,ndx) => {
+    //     t.r_y = Math.cos(time*4) + Math.cos(ndx + time);
+    // })
 }

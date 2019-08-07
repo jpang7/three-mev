@@ -1,5 +1,8 @@
 const WHITE = 0xFFFFFF;
-const RED = 0xFF0000;
+const RED = 0xFF0109;
+// const RED = 0xFC50F7;
+// const RED = 0xF57B36;
+// const RED = 0x4F854C;
 const GREY = 0x52527A;
 
 const canvas = document.querySelector('#c');
