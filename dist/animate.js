@@ -6,13 +6,22 @@ var bolts = [];
 for (let i = 0; i < 20; i++) {
     let b = new Bolt(-3, -4 + i * 1.5, -1);
     bolts.push(b);
-    recycle_proton_list.push(new BoltEmitter(b));
+    // recycle_proton_list.push(new BoltEmitter(b));
 }
 
 var drones = [];
 for (let i = 0; i < 50; i++) {
     drones.push(new Drone(-3, 0, 0));
 }
+
+// for (let i = 0; i < 12; i++) {
+//     back_proton_list.push(new BackEmitter(-4, i));
+//     back_proton_list.push(new BackEmitter(4, i));
+// }
+
+// for (let i = 0; i < 4; i++) {
+//     travel_list.push(new TravelingEmitter(-4, 1));
+// }
 
 cubes.forEach((cube) => {
     cube.adjust_cube();

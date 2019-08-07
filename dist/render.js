@@ -137,13 +137,19 @@ function sub_render(time, honest_mixer, adversary_mixer) {
         t.update();
     })
 
-    drones.forEach((d,ndx) => {
+    drones.forEach((d, ndx) => {
         d.set(
-            -4.5 + Math.cos(time + ndx * 100),
+            -3 + Math.cos(time + ndx * 100),
             Math.cos(ndx + time) + Math.cos(time * 4),
             Math.sin(ndx + time))
         d.update();
     })
+
+    back_proton.update();
+    travel_list.forEach((t) => {
+        t.update();
+    })
+    // back_proton_list.forEach((t) => )
 
     // tx_lst.forEach((t,ndx) => {
     //     t.r_y = Math.cos(time*4) + Math.cos(ndx + time);

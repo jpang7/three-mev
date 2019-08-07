@@ -51,11 +51,11 @@ function Tx(x, y, z, color) {
 }
 
 function InitTx() {
-    Tx.call(this, -4.5, 0, 0, WHITE);
+    Tx.call(this, -3, 0, 0, WHITE);
 }
 
 function BadTx() {
-    Tx.call(this, 4.5, 0, 0, RED);
+    Tx.call(this, 3, 0, 0, RED);
 }
 
 for (let i = 0; i < 27; i++) {
@@ -506,7 +506,7 @@ function Bolt(x, y, z) {
     this.trail = makeTrail();
     this.count = 0;
     this.update = function () {
-        const speed = 0.3;
+        const speed = 0.7;
         let dist_x = Math.abs(this.b.position.x - this.x);
         let dist_y = Math.abs(this.b.position.y - this.y);
         let dist_z = Math.abs(this.b.position.z - this.z);
