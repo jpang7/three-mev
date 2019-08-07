@@ -49,7 +49,7 @@ function main() {
                 child.receiveShadow = true;
             }
         });
-        scene.add(object);
+        // scene.add(object);
     })
 
 

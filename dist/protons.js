@@ -78,4 +78,41 @@ function WhiteParticleEmitter(p) {
 
 function CoinEmitter(c) {
     this.e = new Proton.Emitter();
+    this.c = c;
+    this.behave = new Proton.Color(0xffffff, ['#ffff00', '#ffb601'], Infinity, Proton.easeOutSine);
+
+    coin_proton.addEmitter(this.e);
+
+    this.e.rate = new Proton.Rate(new Proton.Span(1,1), .2);
+    this.e.addInitialize(new Proton.Life(0.1,0.4));
+    this.e.addInitialize(new Proton.Body(new THREE.Sprite(proton_sprite_mat)));
+    this.e.addInitialize(new Proton.Velocity(0.001, new Proton.Vector3D(0,1,0), 0));
+    this.e.addInitialize(new Proton.Position(new Proton.BoxZone(0.01)));
+
+    this.e.addBehaviour(new Proton.RandomDrift(0.001,4,0.001, 0.1));
+    this.e.addBehaviour(new Proton.Scale(new Proton.Span(1,1), 0));
+    this.e.addBehaviour(this.behave);
+    // this.e.removeBehaviour(this.behave)
+    // this.e.addBehaviour(new Proton.Color(0xff0000, ['#ffff00', '#ffb601'], Infinity, Proton.easeOutSine))
+    this.e.emit();
+    
+    this.update = function() {
+        this.e.p.x = this.c.c.position.x;
+        this.e.p.y = this.c.c.position.y;
+        this.e.p.z = this.c.c.position.z;
+    }
 }
+
+const coin_colors = [
+    0xffffff, //white
+    0xffff00, //yellow
+    0xffa601, //orange
+    // 0xff6901, // redder orange
+    0xff3501, // red orange
+    0xff017c, // pink
+    0xff01b4, // magenta
+    // 0xeb01ff, // purple
+    0x7f01ff, // purple blue
+    0x2a01ff // blue
+]
+var coin_color_count = 0;

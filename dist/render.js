@@ -38,7 +38,8 @@ function sub_render(time, honest_mixer, adversary_mixer) {
         if (camera.fov >= 130) {
             state = "zoom out";
         }
-        forks.forEach((b) => b.set_coins(3.3, 0));
+        forks.forEach((b) => b.set_coins(4.3, 0));
+        // forks.forEach((b) => b.emit_color(null))
         bolts.forEach((b) => b.disappear());
     }
     else if (state == "zoom out") { // Camera fully zoomed out
@@ -46,6 +47,9 @@ function sub_render(time, honest_mixer, adversary_mixer) {
     }
     else if (state == "replay") { // Preparvanish_coinse the next config and loop back to stable
         forks.forEach((c) => c.delete_coins());
+        // coin_proton.destroy();
+        // coin_proton = new Proton();
+        coin_proton_list = [];
         camera.fov -= 0.5;
         camera.updateProjectionMatrix();
         if (camera.fov <= 75) {
@@ -125,6 +129,11 @@ function sub_render(time, honest_mixer, adversary_mixer) {
 
     recycle_proton.update();
     recycle_proton_list.forEach((t) => {
+        t.update();
+    })
+
+    coin_proton.update();
+    coin_proton_list.forEach((t) => {
         t.update();
     })
 

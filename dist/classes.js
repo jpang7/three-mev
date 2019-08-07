@@ -206,6 +206,14 @@ function RedBlock(y, mev) {
         })
     }
 
+    this.emit_color = function (color) {
+        this.coins.forEach((c) => {
+            c.e.e.removeBehaviour(c.e.behave);
+            c.e.behave = new Proton.Color(color, ['#ffff00', color], Infinity, Proton.easeOutSine)
+            c.e.e.addBehaviour(c.e.behave);
+        })
+    }
+
     this.shift_coins = function (y) {
         this.coins.forEach((c) => c.y += y);
     }
@@ -258,10 +266,13 @@ function Coin(x, y) {
     this.z = 0;
     this.g = makeGlow(x, y);
     this.ut = 0;
+    this.e = new CoinEmitter(this);
+
+    coin_proton_list.push(this.e);
     // Go in a random direction to the right
     this.drift = function () {
-        this.x += Math.random() * 3 * ((Math.random() < 0.5) ? 1 : -3);
-        this.y += Math.random() * 2*  ((Math.random() < 0.5) ? 1 : -1);
+        this.x += Math.random() * 2 * ((Math.random() < 0.5) ? 1 : -3);
+        this.y += Math.random() * 1.4*  ((Math.random() < 0.5) ? 1 : -1);
     }
     // Translate to ([this.x], [this.y])
     this.update = function (time) {
@@ -301,6 +312,7 @@ function Coin(x, y) {
     this.delete = function () {
         scene.remove(this.c);
         scene.remove(this.g);
+        this.e.e.destroy();
     }
 }
 

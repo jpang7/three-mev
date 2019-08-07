@@ -42,6 +42,10 @@ function fork_state(time) {
             let nb = new RedBlock(tb.y, tb.mev);
             nb.b.position.x = 2;
             nb.spawn();
+            nb.emit_color(coin_colors[coin_color_count % coin_colors.length]);
+
+            if (tb.mev != 0) coin_color_count++;
+
             nb.explode();
             nb.vanish();
             forks.push(nb);
@@ -49,6 +53,7 @@ function fork_state(time) {
             target_block++;
             if (target_block == mev_blocks.length) {
                 surpassed = true;
+                coin_color_count = 0;
                 pass_y = tb.y - 1.5;
                 mev_blocks = [];
             }
